@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>TIaaS — KRA eTIMS Compliance API for Kenyan Developers</title>
+  <meta name="description" content="Sign KRA eTIMS receipts, automate Z-reports, and manage your VSCU without deploying a KRA JAR. TIaaS is the compliance layer POS and ERP developers in Kenya actually want to use." />
+
+  <!-- Open Graph — optimised for LinkedIn shares where your inbound is coming from -->
+  <meta property="og:title" content="TIaaS — KRA eTIMS in 10 lines of code" />
+  <meta property="og:description" content="We manage your VSCU JAR, cmcKey, and Z-reports. You call one endpoint. Built for ERP and POS developers in Kenya." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="og-image.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─────────────────────────────────────────
+       DESIGN TOKENS
+    ───────────────────────────────────────── */
+    :root {
+      --bg:           #07090F;
+      --surface:      #0C1016;
+      --surface-2:    #101520;
+      --border:       #1B2335;
+      --border-dim:   #111825;
+      --text:         #E2E8F2;
+      --text-2:       #7A8499;
+      --text-3:       #3D4A60;
+      --accent:       #00C897;
+      --accent-dim:   rgba(0, 200, 151, 0.08);
+      --accent-mid:   rgba(0, 200, 151, 0.18);
+      --accent-glow:  rgba(0, 200, 151, 0.28);
+      --warn:         #F0A020;
+      --danger:       #E05252;
+
+      --font:         'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono:         'JetBrains Mono', 'Fira Code', monospace;
+
+      --r-sm:   6px;
+      --r:      10px;
+      --r-lg:   16px;
+      --r-xl:   22px;
+
+      --shadow:    0 4px 24px rgba(0,0,0,0.45);
+      --shadow-lg: 0 20px 60px rgba(0,0,0,0.55);
+
+      --max-w:    1080px;
+      --gap:      112px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ─────────────────────────────────────────
+       LAYOUT
+    ───────────────────────────────────────── */
+    .wrap {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    section { padding: var(--gap) 0; }
+
+    /* ─────────────────────────────────────────
+       TYPE SCALE
+    ───────────────────────────────────────── */
+    .eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .display {
+      font-size: clamp(36px, 5.5vw, 60px);
+      font-weight: 700;
+      line-height: 1.07;
+      letter-spacing: -0.035em;
+      color: var(--text);
+    }
+
+    .display em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    h2 {
+      font-size: clamp(26px, 3.5vw, 40px);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .lead {
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--text-2);
+      max-width: 50ch;
+      margin-top: 14px;
+    }
+
+    /* ─────────────────────────────────────────
+       BUTTONS
+    ───────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 11px 22px;
+      border-radius: var(--r-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      white-space: nowrap;
+      letter-spacing: -0.01em;
+    }
+
+    .btn:hover { text-decoration: none; transform: translateY(-1px); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #00DEAD;
+      border-color: #00DEAD;
+      box-shadow: 0 6px 22px var(--accent-glow);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-2);
+      border-color: var(--border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--text-3);
+    }
+
+    .btn-lg { font-size: 15px; padding: 13px 26px; }
+
+    /* ─────────────────────────────────────────
+       NAV
+    ───────────────────────────────────────── */
+    #nav {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 200;
+      padding: 0 24px;
+      border-bottom: 1px solid transparent;
+      transition: background 0.25s, border-color 0.25s;
+    }
+
+    #nav.solid {
+      background: rgba(7, 9, 15, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-color: var(--border-dim);
+    }
+
+    .nav-row {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+      padding: 6px 12px;
+      border-radius: var(--r-sm);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .nav-link:hover { color: var(--text); text-decoration: none; }
+
+    /* ─────────────────────────────────────────
+       HERO
+    ───────────────────────────────────────── */
+    .hero {
+      padding: 152px 0 72px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Radial glow from top */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 480px;
+      background: radial-gradient(ellipse at center top,
+        rgba(0, 200, 151, 0.09) 0%,
+        rgba(0, 200, 151, 0.03) 40%,
+        transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-mid);
+      padding: 5px 13px;
+      border-radius: 100px;
+      margin-bottom: 22px;
+    }
+
+    .hero-pill .pulse {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse-dot 2.4s ease infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.35; transform: scale(0.7); }
+    }
+
+    .hero h1 { margin-bottom: 18px; }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 32px;
+    }
+
+    .hero-trust {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 36px;
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--text-3);
+    }
+
+    .trust-item svg { flex-shrink: 0; }
+
+    /* ─────────────────────────────────────────
+       CODE WINDOW
+    ───────────────────────────────────────── */
+    .win {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .win-bar {
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .win-dots { display: flex; gap: 6px; }
+
+    .win-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .wd-r { background: #FF5F57; }
+    .wd-y { background: #FEBC2E; }
+    .wd-g { background: #28C840; }
+
+    .win-tabs { display: flex; gap: 3px; flex: 1; justify-content: center; }
+
+    .wtab {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-3);
+      background: transparent;
+      border: 1px solid transparent;
+      transition: all 0.13s;
+      line-height: 1;
+    }
+
+    .wtab.on {
+      background: var(--bg);
+      border-color: var(--border);
+      color: var(--text-2);
+    }
+
+    .win-body { padding: 20px 22px; overflow-x: auto; }
+
+    .win-body pre {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.75;
+      tab-size: 2;
+      margin: 0;
+    }
+
+    /* Dracula-inspired palette — not default Prism */
+    .kw  { color: #FF79C6; }   /* keyword/import */
+    .fn  { color: #50FA7B; }   /* function call */
+    .st  { color: #F1FA8C; }   /* string */
+    .nm  { color: #BD93F9; }   /* number */
+    .cm  { color: #5A6478; font-style: italic; } /* comment */
+    .cl  { color: #8BE9FD; }   /* class/type */
+    .pu  { color: #AAB2C0; }   /* punctuation */
+    .vr  { color: #E2E8F2; }   /* variable */
+    .op  { color: #FF79C6; }   /* operator */
+
+    .code-pane { display: none; }
+    .code-pane.on { display: block; }
+
+    .win-response {
+      border-top: 1px solid var(--border);
+      padding: 14px 22px 18px;
+      background: rgba(0, 200, 151, 0.025);
+    }
+
+    .res-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-3);
+      margin-bottom: 10px;
+    }
+
+    .badge-200 {
+      background: rgba(0, 200, 151, 0.15);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* ─────────────────────────────────────────
+       MANDATE STRIP
+    ───────────────────────────────────────── */
+    .mandate {
+      border-top: 1px solid rgba(240, 160, 32, 0.15);
+      border-bottom: 1px solid rgba(240, 160, 32, 0.15);
+      background: rgba(240, 160, 32, 0.04);
+      padding: 18px 0;
+    }
+
+    .mandate-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .mandate-icon { font-size: 17px; line-height: 1.6; flex-shrink: 0; }
+
+    .mandate p {
+      font-size: 13.5px;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+
+    .mandate strong { color: var(--warn); font-weight: 600; }
+
+    /* ─────────────────────────────────────────
+       PROBLEM
+    ───────────────────────────────────────── */
+    .problem-table {
+      margin-top: 40px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    .prob-row {
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      align-items: start;
+      gap: 14px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border-dim);
+      transition: background 0.13s;
+    }
+
+    .prob-row:last-child { border-bottom: none; }
+    .prob-row:hover { background: var(--surface); }
+
+    .prob-n {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-3);
+      padding-top: 3px;
+    }
+
+    .prob-body h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 3px;
+      color: var(--text);
+    }
+
+    .prob-body p {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.55;
+    }
+
+    .prob-body code {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: var(--text-3);
+      background: var(--surface-2);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .tag {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      align-self: flex-start;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+
+    .tag-hard   { background: rgba(224, 82, 82, 0.10); color: #E05252; }
+    .tag-legal  { background: rgba(240, 160, 32, 0.10); color: #F0A020; }
+    .tag-ops    { background: rgba(124, 92, 246, 0.10); color: #A07CEA; }
+
+    .or-call {
+      margin-top: 36px;
+      text-align: center;
+      padding: 28px;
+      border: 1px dashed var(--border);
+      border-radius: var(--r-lg);
+    }
+
+    .or-call h3 { font-size: 22px; color: var(--text); }
+    .or-call p  { font-size: 13px; color: var(--text-3); margin-top: 6px; }
+
+    /* ─────────────────────────────────────────
+       HOW IT WORKS
+    ───────────────────────────────────────── */
+    .steps {
+      margin-top: 44px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    .step {
+      background: var(--surface);
+      padding: 30px 26px;
+    }
+
+    .step-n {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .step h3 { font-size: 17px; margin-bottom: 8px; }
+
+    .step p {
+      font-size: 13.5px;
+      color: var(--text-2);
+      line-height: 1.65;
+    }
+
+    .step-cmd {
+      margin-top: 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-3);
+      background: var(--bg);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--r-sm);
+      padding: 9px 13px;
+    }
+
+    /* CSS architecture diagram */
+    .arch {
+      margin-top: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 36px 28px;
+    }
+
+    .arch-box {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 18px;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .arch-box.hi {
+      border-color: var(--accent-mid);
+      background: var(--accent-dim);
+    }
+
+    .arch-box .ab-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .arch-box.hi .ab-name { color: var(--accent); }
+
+    .arch-box .ab-sub {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    .arch-arr {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 10px;
+    }
+
+    .arch-arr-line {
+      width: 48px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), var(--accent), var(--border));
+      position: relative;
+    }
+
+    .arch-arr-line::after {
+      content: '›';
+      position: absolute;
+      right: -5px;
+      top: -8px;
+      color: var(--accent);
+      font-size: 14px;
+    }
+
+    .arch-arr-lbl {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      color: var(--text-3);
+      margin-top: 5px;
+      white-space: nowrap;
+    }
+
+    /* ─────────────────────────────────────────
+       FEATURES
+    ───────────────────────────────────────── */
+    .feat-grid {
+      margin-top: 44px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    .feat {
+      background: var(--surface);
+      padding: 26px;
+      transition: background 0.13s;
+    }
+
+    .feat:hover { background: var(--surface-2); }
+
+    .feat-ico {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--r-sm);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      font-size: 15px;
+    }
+
+    .feat h3 { font-size: 14.5px; margin-bottom: 7px; }
+
+    .feat p { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+    .feat-spec {
+      margin-top: 11px;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .feat-spec::before {
+      content: '↗';
+      color: var(--accent);
+    }
+
+    /* ─────────────────────────────────────────
+       PRICING
+    ───────────────────────────────────────── */
+    .pricing-grid {
+      margin-top: 44px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .price-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .price-card.hi {
+      border-color: var(--accent-mid);
+      background: rgba(0, 200, 151, 0.035);
+    }
+
+    .pc-tier {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .price-card.hi .pc-tier { color: var(--accent); }
+
+    .pc-price {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+
+    .pc-amount {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--text);
+    }
+
+    .pc-unit { font-size: 13px; color: var(--text-2); }
+
+    .pc-desc { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+
+    .pc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      flex: 1;
+    }
+
+    .pc-list li {
+      font-size: 13px;
+      color: var(--text-2);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .pc-list li::before {
+      content: '✓';
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ─────────────────────────────────────────
+       FAQ
+    ───────────────────────────────────────── */
+    .faq-list {
+      margin-top: 44px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .faq-item {
+      border-radius: var(--r);
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .faq-q {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 19px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      font-family: var(--font);
+      font-size: 14.5px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      transition: color 0.13s;
+    }
+
+    .faq-q:hover { color: var(--accent); }
+
+    .faq-chev {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      color: var(--text-3);
+      transition: transform 0.22s;
+    }
+
+    .faq-item.open .faq-chev { transform: rotate(180deg); }
+
+    .faq-ans {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .faq-ans-inner {
+      padding: 0 22px 18px;
+      border-top: 1px solid var(--border-dim);
+      padding-top: 14px;
+      font-size: 13.5px;
+      color: var(--text-2);
+      line-height: 1.75;
+    }
+
+    .faq-ans-inner code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--surface-2);
+      padding: 1px 6px;
+      border-radius: 3px;
+      color: var(--text-3);
+    }
+
+    .faq-ans-inner a { color: var(--accent); }
+
+    .faq-ans-inner strong { color: var(--text); font-weight: 600; }
+
+    /* ─────────────────────────────────────────
+       WAITLIST
+    ───────────────────────────────────────── */
+    .waitlist-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .waitlist-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+
+    .wl-copy h2 { margin-bottom: 14px; }
+
+    .wl-copy .lead { max-width: 44ch; }
+
+    .wl-note {
+      margin-top: 22px;
+      font-size: 13px;
+      color: var(--text-3);
+      line-height: 1.6;
+    }
+
+    .wl-stat {
+      margin-top: 26px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-3);
+      line-height: 1.55;
+    }
+
+    .wl-stat strong { color: var(--text-2); }
+
+    /* Form */
+    .form-block { display: flex; flex-direction: column; gap: 14px; }
+
+    .fg { display: flex; flex-direction: column; gap: 5px; }
+
+    label {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+
+    input, select, textarea {
+      font-family: var(--font);
+      font-size: 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      color: var(--text);
+      padding: 10px 14px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -webkit-appearance: none;
+    }
+
+    input::placeholder, textarea::placeholder { color: var(--text-3); }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(0, 200, 151, 0.45);
+      box-shadow: 0 0 0 3px rgba(0, 200, 151, 0.07);
+    }
+
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='none' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%233D4A60' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    select option { background: var(--surface); }
+
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .form-submit { margin-top: 4px; width: 100%; justify-content: center; }
+
+    .form-fine {
+      font-size: 11.5px;
+      color: var(--text-3);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 44px 28px;
+      border: 1px solid var(--accent-mid);
+      border-radius: var(--r-lg);
+      background: var(--accent-dim);
+    }
+
+    .form-success .check { font-size: 30px; margin-bottom: 14px; }
+    .form-success h3 { color: var(--accent); margin-bottom: 8px; }
+    .form-success p { font-size: 14px; line-height: 1.65; }
+
+    /* ─────────────────────────────────────────
+       FOOTER
+    ───────────────────────────────────────── */
+    footer {
+      padding: 36px 0;
+      border-top: 1px solid var(--border-dim);
+    }
+
+    .footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-links { display: flex; gap: 22px; flex-wrap: wrap; }
+
+    .footer-links a {
+      font-size: 13px;
+      color: var(--text-3);
+      text-decoration: none;
+      transition: color 0.13s;
+    }
+
+    .footer-links a:hover { color: var(--text-2); }
+
+    .footer-copy { font-size: 12.5px; color: var(--text-3); }
+
+    /* ─────────────────────────────────────────
+       DIVIDER / UTILS
+    ───────────────────────────────────────── */
+    .section-head { margin-bottom: 0; }
+
+    .ruled {
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    /* ─────────────────────────────────────────
+       RESPONSIVE
+    ───────────────────────────────────────── */
+    @media (max-width: 920px) {
+      :root { --gap: 80px; }
+      .hero-grid     { grid-template-columns: 1fr; gap: 44px; }
+      .steps         { grid-template-columns: 1fr; }
+      .feat-grid     { grid-template-columns: repeat(2, 1fr); }
+      .pricing-grid  { grid-template-columns: 1fr; max-width: 400px; }
+      .waitlist-grid { grid-template-columns: 1fr; gap: 44px; }
+      .arch          { flex-wrap: wrap; gap: 6px; }
+    }
+
+    @media (max-width: 640px) {
+      .feat-grid   { grid-template-columns: 1fr; }
+      .form-row-2  { grid-template-columns: 1fr; }
+      .hero        { padding-top: 110px; }
+      .nav-link    { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     NAV
+════════════════════════════════════════ -->
+<nav id="nav">
+  <div class="nav-row">
+    <a href="#" class="nav-logo">Tax<span>ID</span></a>
+    <div class="nav-links">
+      <a href="#how-it-works" class="nav-link">How it works</a>
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#pricing" class="nav-link">Pricing</a>
+      <a href="https://linkd-taxid.github.io/taxid-etims" target="_blank" class="nav-link">Docs</a>
+      <a href="#waitlist" class="btn btn-primary" style="margin-left: 8px; font-size: 13px; padding: 8px 18px;">
+        Get sandbox access
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ════════════════════════════════════════
+     HERO
+════════════════════════════════════════ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+
+      <div>
+        <div class="hero-pill">
+          <span class="pulse"></span>
+          Sandbox live &amp; free
+        </div>
+
+        <h1 class="display">
+          KRA eTIMS compliance<br>in <em>10 lines</em> of code.
+        </h1>
+
+        <p class="lead">
+          TIaaS manages your VSCU JAR, cmcKey lifecycle, offline queuing, and Z-reports.
+          Your team makes one API call. We handle everything KRA requires.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#waitlist" class="btn btn-primary btn-lg">
+            Get sandbox access
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="https://linkd-taxid.github.io/taxid-etims" target="_blank" class="btn btn-ghost btn-lg">
+            Browse the docs
+          </a>
+        </div>
+
+        <div class="hero-trust">
+          <span class="trust-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            VSCU Spec v2.0 compliant
+          </span>
+          <span class="trust-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            AES-256-GCM at rest
+          </span>
+          <span class="trust-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            KDPA 2019 §4.7
+          </span>
+        </div>
+      </div>
+
+      <!-- CODE WINDOW -->
+      <div>
+        <div class="win">
+          <div class="win-bar">
+            <div class="win-dots">
+              <span class="wd-r"></span>
+              <span class="wd-y"></span>
+              <span class="wd-g"></span>
+            </div>
+            <div class="win-tabs">
+              <button class="wtab on" onclick="switchTab(this,'py')">python</button>
+              <button class="wtab" onclick="switchTab(this,'curl')">curl</button>
+            </div>
+            <div style="width:48px"></div>
+          </div>
+
+          <div class="win-body">
+            <div id="pane-py" class="code-pane on">
+<pre><span class="kw">from</span> <span class="cl">kra_etims_sdk</span> <span class="kw">import</span> <span class="cl">TIaaSClient</span>
+
+client <span class="op">=</span> <span class="cl">TIaaSClient</span><span class="pu">(</span>
+    client_id<span class="op">=</span><span class="st">"txs_sb_••••••••"</span><span class="pu">,</span>
+    client_secret<span class="op">=</span><span class="st">"sk_sb_••••••••••••"</span>
+<span class="pu">)</span>
+
+receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn">sign_sale</span><span class="pu">(</span>
+    supplier_pin<span class="op">=</span><span class="st">"A000123456B"</span><span class="pu">,</span>
+    amount<span class="op">=</span><span class="nm">5800.00</span><span class="pu">,</span>
+    tax_band<span class="op">=</span><span class="st">"B"</span><span class="pu">,</span>          <span class="cm"># 16% standard VAT</span>
+    tax_amount<span class="op">=</span><span class="nm">800.00</span><span class="pu">,</span>
+    buyer_pin<span class="op">=</span><span class="st">"P051234567X"</span><span class="pu">,</span>
+    buyer_name<span class="op">=</span><span class="st">"Acacia Enterprises Ltd"</span><span class="pu">,</span>
+    item_description<span class="op">=</span><span class="st">"MacBook Pro M3"</span>
+<span class="pu">)</span>
+
+<span class="fn">print</span><span class="pu">(</span>receipt<span class="pu">.</span>cu_invoice_number<span class="pu">)</span>
+<span class="cm"># KRACU0100000001/152 NS</span></pre>
+            </div>
+
+            <div id="pane-curl" class="code-pane">
+<pre><span class="fn">curl</span> <span class="op">-X</span> POST https<span class="pu">://</span>api.taxid.co.ke/v2/etims/sale \
+  <span class="op">-H</span> <span class="st">"X-API-Key: txs_sb_••••••••"</span> \
+  <span class="op">-H</span> <span class="st">"Content-Type: application/json"</span> \
+  <span class="op">-d</span> <span class="st">'{
+    "supplierPin":     "A000123456B",
+    "amount":          5800.00,
+    "taxBand":         "B",
+    "taxAmount":       800.00,
+    "buyerPin":        "P051234567X",
+    "buyerName":       "Acacia Enterprises Ltd",
+    "itemDescription": "MacBook Pro M3"
+  }'</span></pre>
+            </div>
+          </div>
+
+          <div class="win-response">
+            <div class="res-label">
+              Response
+              <span class="badge-200">200 OK · SIGNED</span>
+            </div>
+<pre style="font-family:var(--mono);font-size:12px;line-height:1.7"><span class="pu">{</span>
+  <span class="st">"status"</span><span class="pu">:</span>           <span class="st">"SIGNED"</span><span class="pu">,</span>
+  <span class="st">"purchaseId"</span><span class="pu">:</span>      <span class="nm">152</span><span class="pu">,</span>
+  <span class="st">"cuInvoiceNumber"</span><span class="pu">:</span> <span class="st">"KRACU0100000001/152 NS"</span><span class="pu">,</span>
+  <span class="st">"sdcId"</span><span class="pu">:</span>           <span class="st">"KRACU0100000001"</span><span class="pu">,</span>
+  <span class="st">"receiptSignature"</span><span class="pu">:</span><span class="st">"A1B2C3D4E5F6..."</span><span class="pu">,</span>
+  <span class="st">"kraQrPayload"</span><span class="pu">:</span>    <span class="st">"11032026#143022#KRACU..."</span><span class="pu">,</span>
+  <span class="st">"vscuTimestamp"</span><span class="pu">:</span>   <span class="st">"20260311143022"</span>
+<span class="pu">}</span></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     MANDATE STRIP
+════════════════════════════════════════ -->
+<div class="mandate">
+  <div class="wrap">
+    <div class="mandate-row">
+      <span class="mandate-icon">⚖️</span>
+      <p>
+        <strong>KRA eTIMS is law, not a recommendation.</strong>
+        Effective 1 January 2026, every VAT-registered business in Kenya must transmit invoices in real-time via eTIMS.
+        Non-compliant invoices are ineligible for expense deduction under Section 16(1)(c) of the Income Tax Act —
+        and iTax is actively cross-referencing 2025 expense claims against PIN numbers on transmitted invoices.
+      </p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     PROBLEM
+════════════════════════════════════════ -->
+<section id="problem">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">The alternative</span>
+      <h2>Here's what direct eTIMS integration actually requires.</h2>
+      <p class="lead">Before your first signed receipt, you own all of this. Every item is a production incident waiting to happen.</p>
+    </div>
+
+    <div class="problem-table">
+      <div class="prob-row">
+        <span class="prob-n">01</span>
+        <div class="prob-body">
+          <h4>Obtain a VSCU JAR from KRA</h4>
+          <p>The JAR is not publicly downloadable. It requires formal device registration and KRA approval. Approval timelines are not published and not guaranteed.</p>
+        </div>
+        <span class="tag tag-ops">Ops</span>
+      </div>
+      <div class="prob-row">
+        <span class="prob-n">02</span>
+        <div class="prob-body">
+          <h4>Deploy it as a persistent stateful sidecar</h4>
+          <p>One JAR instance per branch — no horizontal scaling. Kubernetes StatefulSet with a dedicated PVC. One misconfigured volume mount overwrites your device state and resets your KRA activation.</p>
+        </div>
+        <span class="tag tag-ops">Ops</span>
+      </div>
+      <div class="prob-row">
+        <span class="prob-n">03</span>
+        <div class="prob-body">
+          <h4>Manage the cmcKey lifecycle</h4>
+          <p>The cryptographic machine code key must be AES-256-GCM encrypted at rest. It cannot appear in logs, stack traces, environment variable dumps, or Kubernetes secret output. Key rotation must be hot, zero-downtime, and auditable.</p>
+        </div>
+        <span class="tag tag-legal">Legal</span>
+      </div>
+      <div class="prob-row">
+        <span class="prob-n">04</span>
+        <div class="prob-body">
+          <h4>Enforce the 24-hour offline hard ceiling</h4>
+          <p>Per VSCU Spec v2.0 §2.2 Policy 4: after 24 hours without KRA connectivity, the VSCU JAR stops issuing receipt numbers. No workaround exists. You must monitor connectivity continuously and auto-generate KRA Downtime Notification Letters at the 15-minute mark.</p>
+        </div>
+        <span class="tag tag-hard">Hard limit</span>
+      </div>
+      <div class="prob-row">
+        <span class="prob-n">05</span>
+        <div class="prob-body">
+          <h4>Run daily X/Z reports at exactly 23:59 EAT</h4>
+          <p>Z-reports reset the VSCU day counter — irreversible per KRA TIS v2.0 §21.6.1. Your retry logic must be bounded to 3 attempts maximum to prevent a duplicate day-reset if the original command was processed but the HTTP response was lost.</p>
+        </div>
+        <span class="tag tag-legal">Legal</span>
+      </div>
+      <div class="prob-row">
+        <span class="prob-n">06</span>
+        <div class="prob-body">
+          <h4>Monitor receipt sequence integrity continuously</h4>
+          <p>Gaps in the <code>rcptNo</code> sequence trigger KRA audit flags. Duplicates on the same <code>sdcId</code> are a compliance violation. You need gap detection, duplicate detection, and a physical <code>UNIQUE(sdc_id, rcpt_sequence_number)</code> DB constraint.</p>
+        </div>
+        <span class="tag tag-legal">Legal</span>
+      </div>
+      <div class="prob-row">
+        <span class="prob-n">07</span>
+        <div class="prob-body">
+          <h4>Build durable offline queuing from scratch</h4>
+          <p>Three-phase outbox protocol to prevent double-signing. SHA-256 payload validation before every replay. Exponential backoff with jitter. Survives pod restarts. Replay in chronological order. Back-fill all signed receipt fields into the original purchase record.</p>
+        </div>
+        <span class="tag tag-hard">Hard</span>
+      </div>
+      <div class="prob-row">
+        <span class="prob-n">08</span>
+        <div class="prob-body">
+          <h4>Maintain strict per-tenant isolation at the DB layer</h4>
+          <p>Row-level security on every table. Distinct AES-256-GCM keys per branch. Branch 001 must never be able to read the Electronic Journal or cmcKey of Branch 002. KDPA 2019 §4.7 compliance is a legal obligation, not optional hardening.</p>
+        </div>
+        <span class="tag tag-legal">Legal</span>
+      </div>
+    </div>
+
+    <div class="or-call">
+      <h3>Or call our API.</h3>
+      <p>We've built and operate all of the above. It took us months.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     HOW IT WORKS
+════════════════════════════════════════ -->
+<section id="how-it-works" class="ruled">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Integration</span>
+      <h2>Three steps. One afternoon.</h2>
+      <p class="lead">Most teams are signing receipts in their sandbox environment within a few hours of receiving credentials.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">Step 01</div>
+        <h3>Get credentials</h3>
+        <p>Fill in the form below. We provision your sandbox environment and send you a <code>client_id</code> and <code>client_secret</code> pointed at KRA's sandbox — the same VSCU device, isolated from production.</p>
+        <div class="step-cmd">APP_ENVIRONMENT=SANDBOX</div>
+      </div>
+      <div class="step">
+        <div class="step-n">Step 02</div>
+        <h3>Integrate</h3>
+        <p>Install the Python SDK or call the REST API directly. One function call per transaction — sign a sale, issue a credit note, adjust stock. The offline queue and Z-reports require zero code on your end.</p>
+        <div class="step-cmd">pip install kra-etims-sdk</div>
+      </div>
+      <div class="step">
+        <div class="step-n">Step 03</div>
+        <h3>Go live</h3>
+        <p>When you're ready, swap your sandbox credentials for production credentials. We handle KRA VSP certification, VSCU deployment, and cmcKey provisioning on our side. Your integration code doesn't change.</p>
+        <div class="step-cmd">Swap credentials. Ship.</div>
+      </div>
+    </div>
+
+    <div class="arch">
+      <div class="arch-box">
+        <div class="ab-name">Your ERP / POS</div>
+        <div class="ab-sub">REST + API key</div>
+      </div>
+      <div class="arch-arr">
+        <div class="arch-arr-line"></div>
+        <div class="arch-arr-lbl">HTTPS</div>
+      </div>
+      <div class="arch-box hi">
+        <div class="ab-name">TIaaS API</div>
+        <div class="ab-sub">:8080 · Spring Boot</div>
+      </div>
+      <div class="arch-arr">
+        <div class="arch-arr-line"></div>
+        <div class="arch-arr-lbl">localhost:8088</div>
+      </div>
+      <div class="arch-box">
+        <div class="ab-name">VSCU JAR</div>
+        <div class="ab-sub">KRA-issued · stateful</div>
+      </div>
+      <div class="arch-arr">
+        <div class="arch-arr-line"></div>
+        <div class="arch-arr-lbl">encrypted</div>
+      </div>
+      <div class="arch-box">
+        <div class="ab-name">KRA eTIMS</div>
+        <div class="ab-sub">GavaConnect API</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     FEATURES
+════════════════════════════════════════ -->
+<section id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">What's included</span>
+      <h2>Production-grade compliance infrastructure, fully managed.</h2>
+      <p class="lead">Every feature below is live and battle-tested against KRA's sandbox environment.</p>
+    </div>
+
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="feat-ico">⚡</div>
+        <h3>Offline-first resilience</h3>
+        <p>PostgreSQL-backed queue survives pod restarts. Three-phase outbox ensures the VSCU is never called twice for the same transaction — no duplicate receipt numbers. Replay in chronological order on KRA restore.</p>
+        <div class="feat-spec">SHA-256 payload validation · exponential backoff</div>
+      </div>
+      <div class="feat">
+        <div class="feat-ico">📋</div>
+        <h3>Automated Z-reports</h3>
+        <p>Daily Z-reports auto-submit at 23:59 EAT. Bounded to 3 retry attempts — the VSCU day-reset is irreversible per KRA TIS v2.0 §21.6.1. After 3 failures, a CRITICAL alert fires and automatic retrying permanently stops.</p>
+        <div class="feat-spec">ZReportScheduler · DailyZReportRetryWorker</div>
+      </div>
+      <div class="feat">
+        <div class="feat-ico">🔒</div>
+        <h3>Strict tenant isolation</h3>
+        <p>Row-level security enforced at the PostgreSQL layer. Distinct AES-256-GCM keys per branch. Branch 001 cannot read Branch 002's Electronic Journal or cmcKey — guaranteed at the database constraint level, not just application logic.</p>
+        <div class="feat-spec">pgcrypto · per-branch key material · KDPA §4.7</div>
+      </div>
+      <div class="feat">
+        <div class="feat-ico">💬</div>
+        <h3>Supplier onboarding gateway</h3>
+        <p>Send unregistered suppliers a confirmation request via SMS or WhatsApp. On YES reply, TIaaS generates a Category 5 reverse invoice on their behalf. For suppliers below KShs 5M turnover who can't issue eTIMS receipts independently.</p>
+        <div class="feat-spec">Africa's Talking · WhatsApp Cloud API</div>
+      </div>
+      <div class="feat">
+        <div class="feat-ico">🔍</div>
+        <h3>Receipt integrity monitoring</h3>
+        <p>Monotonic sequence counter on every <code style="font-family:var(--mono);font-size:11px;color:var(--text-3)">rcptNo</code>. Continuous gap and duplicate detection. Physical database constraint on <code style="font-family:var(--mono);font-size:11px;color:var(--text-3)">(sdc_id, rcpt_sequence_number)</code>. You know before KRA does.</p>
+        <div class="feat-spec">KRA_AUDIT_RISK error class · DB UNIQUE constraint</div>
+      </div>
+      <div class="feat">
+        <div class="feat-ico">🔑</div>
+        <h3>cmcKey lifecycle management</h3>
+        <p>AES-256-GCM encrypted at rest. Zero-downtime hot rotation without a pod restart. Version-tracked per device — every rotation increments an audit column. The raw key never appears in logs, stack traces, or API responses.</p>
+        <div class="feat-spec">CmcKeyRotationService · version-tracked per device</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     PRICING
+════════════════════════════════════════ -->
+<section id="pricing" class="ruled">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Pricing</span>
+      <h2>Predictable bills. No receipt-count surprises at scale.</h2>
+      <p class="lead">Sandbox is free. Growth has a monthly floor with 2,000 receipts included. ISV billing is per branch — your volume never works against you.</p>
+    </div>
+
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div>
+          <div class="pc-tier">Sandbox</div>
+          <div class="pc-price"><span class="pc-amount">Free</span></div>
+        </div>
+        <p class="pc-desc">Full platform access against KRA's test environment. Identical API surface and behavior to production — offline queuing, Z-reports, and all 30 error codes.</p>
+        <ul class="pc-list">
+          <li>Unlimited sandbox signing</li>
+          <li>Python SDK + REST API</li>
+          <li>X/Z report generation</li>
+          <li>Supplier gateway (SMS/WhatsApp)</li>
+          <li>eTIMS error code reference docs</li>
+        </ul>
+        <a href="#waitlist" class="btn btn-ghost" style="width:100%;justify-content:center">Get sandbox access</a>
+      </div>
+
+      <div class="price-card hi">
+        <div>
+          <div class="pc-tier">Growth</div>
+          <div class="pc-price">
+            <span class="pc-amount">KES 3,000</span>
+            <span class="pc-unit">/ month</span>
+          </div>
+        </div>
+        <p class="pc-desc">
+          Includes your first 2,000 signed receipts.
+          KES 1.50 per receipt above that — billed monthly, no surprises.
+        </p>
+        <div style="margin:2px 0 4px;padding:10px 14px;background:var(--bg);border:1px solid var(--border-dim);border-radius:var(--r-sm);font-size:12px;color:var(--text-3);font-family:var(--mono);line-height:1.7">
+          0 – 2,000 receipts  → KES 3,000 flat<br>
+          2,001 – 10,000      → + KES 1.50 each<br>
+          10,001+             → contact us for a volume rate
+        </div>
+        <ul class="pc-list">
+          <li>Everything in Sandbox</li>
+          <li>Production VSCU device, provisioned by us</li>
+          <li>99.9% uptime SLA</li>
+          <li>Per-branch isolation</li>
+          <li>Alerting on VSCU events and ceiling warnings</li>
+          <li>KRA Downtime Notification Letters</li>
+        </ul>
+        <a href="#waitlist" class="btn btn-primary" style="width:100%;justify-content:center">Join the production waitlist</a>
+      </div>
+
+      <div class="price-card">
+        <div>
+          <div class="pc-tier">ISV / Enterprise</div>
+          <div class="pc-price">
+            <span class="pc-amount">KES 2,500</span>
+            <span class="pc-unit">/ branch / month</span>
+          </div>
+        </div>
+        <p class="pc-desc">
+          Per-branch flat billing — your receipt volume is your business. Tiers drop the per-branch rate as you grow.
+        </p>
+        <div style="margin:2px 0 4px;padding:10px 14px;background:var(--bg);border:1px solid var(--border-dim);border-radius:var(--r-sm);font-size:12px;color:var(--text-3);font-family:var(--mono);line-height:1.7">
+          1 – 10 branches  → KES 2,500 / branch<br>
+          11 – 50 branches → KES 1,800 / branch<br>
+          50+ branches     → negotiate
+        </div>
+        <ul class="pc-list">
+          <li>Everything in Growth</li>
+          <li>Unlimited receipts per branch</li>
+          <li>Multi-branch management API</li>
+          <li>Dedicated VSCU cluster</li>
+          <li>Priority support</li>
+          <li>Custom SLA</li>
+        </ul>
+        <!-- TODO: Replace with your actual contact email -->
+        <a href="mailto:support@taxid.co.ke" class="btn btn-ghost" style="width:100%;justify-content:center">Talk to us</a>
+      </div>
+    </div>
+
+    <p style="font-size:12px;color:var(--text-3);text-align:center;margin-top:22px;line-height:1.6">
+      Production access pending KRA VSP certification. Pricing is indicative and subject to change during early access.
+    </p>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     FAQ
+════════════════════════════════════════ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Questions</span>
+      <h2>The things developers actually ask.</h2>
+    </div>
+
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          Is TIaaS approved by KRA?
+          <span class="faq-chev">↓</span>
+        </button>
+        <div class="faq-ans">
+          <div class="faq-ans-inner">
+            We are currently pursuing KRA VSP (VSCU Service Provider) certification.
+            The sandbox environment runs against KRA's own test infrastructure.
+            Production credentials will be issued after certification completes.
+            We will notify everyone on the waitlist when production access opens — we are not going to quietly slip that past you.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          What happens if TIaaS has an outage?
+          <span class="faq-chev">↓</span>
+        </button>
+        <div class="faq-ans">
+          <div class="faq-ans-inner">
+            The offline queue is PostgreSQL-backed and survives pod restarts. When KRA connectivity drops,
+            the VSCU JAR continues signing locally — this is a KRA-enforced capability, not something we built.
+            You get an alert at 15 minutes of disconnection, and a critical alert at 20 hours.
+            At 24 hours, the VSCU hard-stops per KRA VSCU Spec v2.0 §2.2 Policy 4 — this is a KRA limit, not ours.
+            When connectivity restores, queued transactions replay automatically in chronological order.
+            KRA Downtime Notification Letters are generated automatically at 15 minutes.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          I'm building a POS that will serve multiple merchants. How does multi-tenant work?
+          <span class="faq-chev">↓</span>
+        </button>
+        <div class="faq-ans">
+          <div class="faq-ans-inner">
+            Each merchant branch maps to an isolated tenant with its own API key, AES-256-GCM encryption key,
+            Electronic Journal, and VSCU device. Row-level security at the PostgreSQL layer enforces isolation —
+            one tenant cannot query another's data. This is KDPA 2019 §4.7 compliant.
+            If you're building an ISV platform serving multiple merchants, reach out for the
+            multi-branch management API and volume pricing. That's the ISV/Enterprise tier.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          Which tax band do I use for standard 16% VAT? I've seen conflicting information.
+          <span class="faq-chev">↓</span>
+        </button>
+        <div class="faq-ans">
+          <div class="faq-ans-inner">
+            <strong>Band B = 16% standard VAT.</strong> Not Band A. This mapping is routinely inverted.
+            Per KRA VSCU/OSCU Specification v2.0 §4.1: A = Exempt (0%), B = Standard VAT (16%),
+            C = Zero-Rated (0%), D = Non-VAT (0%), E = Special Rate (8%, petroleum).
+            We maintain a <a href="https://linkd-taxid.github.io/taxid-etims" target="_blank">full eTIMS error code and tax band reference</a>
+            covering all 30 KRA <code>resultCd</code> values, including production-only codes
+            absent from the official KRA spec document.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          What's the difference between VSCU and OSCU?
+          <span class="faq-chev">↓</span>
+        </button>
+        <div class="faq-ans">
+          <div class="faq-ans-inner">
+            VSCU (Virtual Sales Control Unit) is a KRA-issued JAR file deployed on your infrastructure.
+            It signs receipts locally and can operate offline for up to 24 hours — critical for POS systems with unreliable connectivity.
+            OSCU is KRA's cloud-hosted signing service — no JAR to deploy, but no offline capability.
+            TIaaS uses VSCU for resilience. OSCU support is planned for a future phase.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          What languages and frameworks are supported?
+          <span class="faq-chev">↓</span>
+        </button>
+        <div class="faq-ans">
+          <div class="faq-ans-inner">
+            The core API is REST — any language that can make an HTTPS request works.
+            We have a first-class Python SDK (<code>kra-etims-sdk</code>) built for high-throughput workloads.
+            If your stack is Odoo, ERPNext, Sage, or a custom Java/PHP backend, the REST API integrates cleanly.
+            Node.js and PHP SDKs are planned. Reach out if you need help scoping an integration for a specific ERP.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     WAITLIST
+════════════════════════════════════════ -->
+<section class="waitlist-section" id="waitlist">
+  <div class="wrap">
+    <div class="waitlist-grid">
+
+      <div class="wl-copy">
+        <span class="eyebrow">Early access</span>
+        <h2>Get sandbox credentials.</h2>
+        <p class="lead">
+          Sandbox is live and free. We provision credentials manually during early access — usually within one business day.
+        </p>
+        <p class="wl-note">
+          Production access opens after KRA VSP certification. Everyone on this list gets notified first, ahead of any public launch.
+        </p>
+        <div class="wl-stat">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Developers already waiting from POS, ERP, accounting SaaS, and SACCO platforms across Kenya.</span>
+        </div>
+      </div>
+
+      <div>
+        <form id="wl-form" onsubmit="submitForm(event)">
+          <div class="form-block">
+            <div class="form-row-2">
+              <div class="fg">
+                <label for="f-name">Full name</label>
+                <input id="f-name" name="name" type="text" placeholder="Edward Kamau" required />
+              </div>
+              <div class="fg">
+                <label for="f-company">Company / product</label>
+                <input id="f-company" name="company" type="text" placeholder="Your POS or ERP name" required />
+              </div>
+            </div>
+            <div class="fg">
+              <label for="f-email">Work email</label>
+              <input id="f-email" name="email" type="email" placeholder="you@company.co.ke" required />
+            </div>
+            <div class="fg">
+              <label for="f-usecase">What are you building?</label>
+              <select id="f-usecase" name="use_case" required>
+                <option value="" disabled selected>Select your use case</option>
+                <option value="pos-single">POS system for a single merchant</option>
+                <option value="pos-isv">POS platform serving multiple merchants</option>
+                <option value="erp">ERP integration (Odoo, ERPNext, SAP, other)</option>
+                <option value="accounting">Accounting or invoicing SaaS</option>
+                <option value="sacco">SACCO or MFI</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label for="f-volume">Estimated monthly invoice volume</label>
+              <select id="f-volume" name="volume" required>
+                <option value="" disabled selected>Select approximate volume</option>
+                <option value="lt-1k">Under 1,000 receipts / month</option>
+                <option value="1k-10k">1,000 – 10,000 receipts / month</option>
+                <option value="10k-50k">10,000 – 50,000 receipts / month</option>
+                <option value="gt-50k">50,000+ receipts / month</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label for="f-msg">
+                Anything specific you're trying to solve?
+                <span style="color:var(--text-3);font-weight:400">(optional)</span>
+              </label>
+              <textarea id="f-msg" name="message" rows="2" placeholder="Tell us what you're building"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg form-submit" id="wl-btn">
+              Request sandbox access
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <p class="form-fine">
+              No spam. No sales call unless you ask for one.<br>
+              One email when your credentials are ready.
+            </p>
+          </div>
+        </form>
+
+        <div class="form-success" id="wl-success">
+          <div class="check">✓</div>
+          <h3>You're on the list.</h3>
+          <p>
+            We'll send your sandbox credentials to your email within one business day.
+            In the meantime, <a href="https://linkd-taxid.github.io/taxid-etims" target="_blank">browse the eTIMS reference docs</a> —
+            all 30 KRA error codes, including production codes absent from the official spec.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+<footer>
+  <div class="wrap">
+    <div class="footer-row">
+      <a href="#" class="nav-logo">Tax<span>ID</span></a>
+      <div class="footer-links">
+        <a href="https://linkd-taxid.github.io/taxid-etims" target="_blank">eTIMS Error Codes</a>
+        <a href="#faq">FAQ</a>
+        <a href="#waitlist">Get sandbox access</a>
+        <!-- TODO: Replace with your actual contact email -->
+        <a href="mailto:support@taxid.co.ke">Contact</a>
+      </div>
+      <p class="footer-copy">© 2026 TaxID. Built for Kenya.</p>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+  /* ── Nav transparency ── */
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('solid', window.scrollY > 16);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ── Code tab switcher ── */
+  function switchTab(btn, id) {
+    document.querySelectorAll('.wtab').forEach(t => t.classList.remove('on'));
+    document.querySelectorAll('.code-pane').forEach(p => p.classList.remove('on'));
+    btn.classList.add('on');
+    document.getElementById('pane-' + id).classList.add('on');
+  }
+
+  /* ── FAQ accordion ── */
+  function faq(btn) {
+    const item = btn.closest('.faq-item');
+    const ans  = item.querySelector('.faq-ans');
+    const open = item.classList.contains('open');
+
+    // close all
+    document.querySelectorAll('.faq-item').forEach(i => {
+      i.classList.remove('open');
+      i.querySelector('.faq-ans').style.maxHeight = '0';
+    });
+
+    if (!open) {
+      item.classList.add('open');
+      ans.style.maxHeight = ans.scrollHeight + 'px';
+    }
+  }
+
+  /* ── Waitlist form ── */
+  async function submitForm(e) {
+    e.preventDefault();
+
+    const form = document.getElementById('wl-form');
+    const btn  = document.getElementById('wl-btn');
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    try {
+      const res = await fetch('https://formsubmit.co/ajax/support@taxid.co.ke', {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' },
+      });
+
+      if (res.ok) {
+        showSuccess();
+      } else {
+        throw new Error('Submission failed');
+      }
+    } catch (err) {
+      console.error('Form error:', err);
+      btn.disabled = false;
+      btn.innerHTML = 'Try again — something went wrong';
+      btn.style.background = 'rgba(224,82,82,0.15)';
+      btn.style.color = '#E05252';
+      btn.style.borderColor = 'rgba(224,82,82,0.3)';
+    }
+  }
+
+  function showSuccess() {
+    document.getElementById('wl-form').style.display = 'none';
+    document.getElementById('wl-success').style.display = 'block';
+  }
+</script>
+
+</body>
+</html>
