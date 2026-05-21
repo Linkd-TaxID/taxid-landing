@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>TIaaS — KRA eTIMS Compliance API for Kenyan Developers</title>
-  <meta name="description" content="Sign KRA eTIMS receipts, automate Z-reports, and manage your VSCU without deploying a KRA JAR. TIaaS is the compliance layer POS and ERP developers in Kenya actually want to use." />
+  <title>TaxID — KRA eTIMS Compliance API for Kenyan Developers</title>
+  <meta name="description" content="Sign KRA eTIMS receipts, automate Z-reports, and manage your VSCU without deploying a KRA JAR. TaxID is the compliance layer POS and ERP developers in Kenya actually want to use." />
 
   <!-- Open Graph — optimised for LinkedIn shares where your inbound is coming from -->
-  <meta property="og:title" content="TIaaS — KRA eTIMS in 10 lines of code" />
+  <meta property="og:title" content="TaxID — KRA eTIMS in 10 lines of code" />
   <meta property="og:description" content="We manage your VSCU JAR, cmcKey, and Z-reports. You call one endpoint. Built for ERP and POS developers in Kenya." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="og-image.png" />
@@ -1057,7 +1057,7 @@
         </h1>
 
         <p class="lead">
-          TIaaS manages your VSCU JAR, cmcKey lifecycle, offline queuing, and Z-reports.
+          TaxID manages your VSCU JAR, cmcKey lifecycle, offline queuing, and Z-reports.
           Your team makes one API call. We handle everything KRA requires.
         </p>
 
@@ -1105,9 +1105,9 @@
 
           <div class="win-body">
             <div id="pane-py" class="code-pane on">
-<pre><span class="kw">from</span> <span class="cl">kra_etims_sdk</span> <span class="kw">import</span> <span class="cl">TIaaSClient</span>
+<pre><span class="kw">from</span> <span class="cl">kra_etims_sdk</span> <span class="kw">import</span> <span class="cl">TaxIDClient</span>
 
-client <span class="op">=</span> <span class="cl">TIaaSClient</span><span class="pu">(</span>
+client <span class="op">=</span> <span class="cl">TaxIDClient</span><span class="pu">(</span>
     client_id<span class="op">=</span><span class="st">"txs_sb_••••••••"</span><span class="pu">,</span>
     client_secret<span class="op">=</span><span class="st">"sk_sb_••••••••••••"</span>
 <span class="pu">)</span>
@@ -1311,7 +1311,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
         <div class="arch-arr-lbl">HTTPS</div>
       </div>
       <div class="arch-box hi">
-        <div class="ab-name">TIaaS API</div>
+        <div class="ab-name">TaxID API</div>
         <div class="ab-sub">:8080 · Spring Boot</div>
       </div>
       <div class="arch-arr">
@@ -1368,7 +1368,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
       <div class="feat">
         <div class="feat-ico">💬</div>
         <h3>Supplier onboarding gateway</h3>
-        <p>Send unregistered suppliers a confirmation request via SMS or WhatsApp. On YES reply, TIaaS generates a Category 5 reverse invoice on their behalf. For suppliers below KShs 5M turnover who can't issue eTIMS receipts independently.</p>
+        <p>Send unregistered suppliers a confirmation request via SMS or WhatsApp. On YES reply, TaxID generates a Category 5 reverse invoice on their behalf. For suppliers below KShs 5M turnover who can't issue eTIMS receipts independently.</p>
         <div class="feat-spec">Africa's Talking · WhatsApp Cloud API</div>
       </div>
       <div class="feat">
@@ -1421,7 +1421,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
 
       <div class="faq-item">
         <button class="faq-q" onclick="faq(this)">
-          Is TIaaS approved by KRA?
+          Is TaxID approved by KRA?
           <span class="faq-chev">↓</span>
         </button>
         <div class="faq-ans">
@@ -1436,7 +1436,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
 
       <div class="faq-item">
         <button class="faq-q" onclick="faq(this)">
-          What happens if TIaaS has an outage?
+          What happens if TaxID has an outage?
           <span class="faq-chev">↓</span>
         </button>
         <div class="faq-ans">
@@ -1494,7 +1494,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
             VSCU (Virtual Sales Control Unit) is a KRA-issued JAR file deployed on your infrastructure.
             It signs receipts locally and can operate offline for up to 24 hours — critical for POS systems with unreliable connectivity.
             OSCU is KRA's cloud-hosted signing service — no JAR to deploy, but no offline capability.
-            TIaaS uses VSCU for resilience. OSCU support is planned for a future phase.
+            TaxID uses VSCU for resilience. OSCU support is planned for a future phase.
           </div>
         </div>
       </div>
