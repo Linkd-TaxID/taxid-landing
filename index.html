@@ -1602,7 +1602,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
           <div class="check">✓</div>
           <h3>You're on the list.</h3>
           <p>
-            We'll send your sandbox credentials to your email within one business day.
+            We've received your request and will be in touch.
             In the meantime, <a href="https://docs.taxid.co.ke" target="_blank">browse the eTIMS reference docs</a> —
             all 30 KRA error codes, including production codes absent from the official spec.
           </p>
@@ -1677,9 +1677,17 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     btn.textContent = 'Submitting…';
 
     try {
-      const res = await fetch('https://formsubmit.co/ajax/support@taxid.co.ke', {
+      /*
+        Web3Forms: get your access key at web3forms.com — enter support@taxid.co.ke,
+        they email you a key instantly, no activation step required.
+        Replace YOUR_ACCESS_KEY below.
+      */
+      const payload = new FormData(form);
+      payload.append('access_key', 'YOUR_ACCESS_KEY');
+
+      const res = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
-        body: new FormData(form),
+        body: payload,
         headers: { Accept: 'application/json' },
       });
 
