@@ -1677,17 +1677,9 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     btn.textContent = 'Submitting…';
 
     try {
-      /*
-        Web3Forms: get your access key at web3forms.com — enter support@taxid.co.ke,
-        they email you a key instantly, no activation step required.
-        Replace YOUR_ACCESS_KEY below.
-      */
-      const payload = new FormData(form);
-      payload.append('access_key', 'YOUR_ACCESS_KEY');
-
-      const res = await fetch('https://api.web3forms.com/submit', {
+      const res = await fetch('https://formsubmit.co/ajax/support@taxid.co.ke', {
         method: 'POST',
-        body: payload,
+        body: new FormData(form),
         headers: { Accept: 'application/json' },
       });
 
