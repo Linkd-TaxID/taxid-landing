@@ -11,17 +11,98 @@
   <meta property="og:title" content="TaxID — KRA eTIMS in 10 lines of code" />
   <meta property="og:description" content="We manage your VSCU JAR, cmcKey, and Z-reports. You call one endpoint. Built for ERP and POS developers in Kenya." />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="og-image.png" />
+  <meta property="og:url" content="https://taxid.co.ke/" />
+  <meta property="og:site_name" content="TaxID" />
+  <meta property="og:image" content="https://taxid.co.ke/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="TaxID — KRA eTIMS compliance in 10 lines of code, showing a signed receipt API response." />
+  <meta name="twitter:image" content="https://taxid.co.ke/og-image.png" />
+
+  <!-- Twitter / X card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TaxID — KRA eTIMS in 10 lines of code" />
+  <meta name="twitter:description" content="We manage your VSCU JAR, cmcKey, and Z-reports. You call one endpoint. Built for ERP and POS developers in Kenya." />
+
+  <link rel="canonical" href="https://taxid.co.ke/" />
+
+  <!-- Structured data: Organization + FAQ (rich-snippet eligibility) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "TaxID",
+        "url": "https://taxid.co.ke/",
+        "description": "KRA eTIMS compliance API for Kenyan ERP and POS developers. Manages the VSCU JAR, cmcKey lifecycle, offline queuing, and Z-reports behind a single REST endpoint.",
+        "areaServed": "KE",
+        "email": "support@taxid.co.ke"
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is TaxID approved by KRA?",
+            "acceptedAnswer": { "@type": "Answer", "text": "We are currently pursuing KRA VSP (VSCU Service Provider) certification. The sandbox runs against KRA's own test infrastructure. Production credentials are issued after certification completes." }
+          },
+          {
+            "@type": "Question",
+            "name": "What happens if TaxID has an outage?",
+            "acceptedAnswer": { "@type": "Answer", "text": "The offline queue is PostgreSQL-backed and survives pod restarts. The VSCU JAR continues signing locally for up to 24 hours per KRA VSCU Spec v2.0 §2.2 Policy 4. Queued transactions replay automatically in chronological order when connectivity restores." }
+          },
+          {
+            "@type": "Question",
+            "name": "How does multi-tenant isolation work?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Each merchant branch maps to an isolated tenant with its own API key, AES-256-GCM encryption key, Electronic Journal, and VSCU device. Row-level security at the PostgreSQL layer enforces isolation. This is KDPA 2019 §4.7 compliant." }
+          },
+          {
+            "@type": "Question",
+            "name": "Which tax band do I use for standard 16% VAT?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Band B = 16% standard VAT, not Band A. Per KRA VSCU/OSCU Specification v2.0 §4.1: A = Exempt (0%), B = Standard VAT (16%), C = Zero-Rated (0%), D = Non-VAT (0%), E = Special Rate (8%, petroleum)." }
+          },
+          {
+            "@type": "Question",
+            "name": "What's the difference between VSCU and OSCU?",
+            "acceptedAnswer": { "@type": "Answer", "text": "VSCU is a KRA-issued JAR deployed on your infrastructure that signs receipts locally and operates offline for up to 24 hours. OSCU is KRA's cloud-hosted signing service with no offline capability. TaxID uses VSCU for resilience." }
+          },
+          {
+            "@type": "Question",
+            "name": "What languages and frameworks are supported?",
+            "acceptedAnswer": { "@type": "Answer", "text": "The core API is REST — any language that can make an HTTPS request works. There is a first-class Python SDK (kra-etims-sdk). Odoo, ERPNext, Sage, and custom Java/PHP backends integrate via REST. Node.js and PHP SDKs are planned." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Self-hosted fonts — no third-party requests (no visitor IP leaks to Google; KDPA-clean) -->
+  <link rel="preload" href="fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="fonts/jetbrains-mono-var.woff2" as="font" type="font/woff2" crossorigin />
 
   <style>
+    /* Variable fonts, latin subset, self-hosted */
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url('fonts/inter-var.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      font-style: normal;
+      font-weight: 400 500;
+      font-display: swap;
+      src: url('fonts/jetbrains-mono-var.woff2') format('woff2');
+    }
+
     /* ─────────────────────────────────────────
        DESIGN TOKENS
     ───────────────────────────────────────── */
@@ -33,7 +114,7 @@
       --border-dim:   #111825;
       --text:         #E2E8F2;
       --text-2:       #7A8499;
-      --text-3:       #3D4A60;
+      --text-3:       #5A6478;  /* lifted from #3D4A60 — old value failed WCAG AA on body text */
       --accent:       #00C897;
       --accent-dim:   rgba(0, 200, 151, 0.08);
       --accent-mid:   rgba(0, 200, 151, 0.18);
@@ -43,6 +124,16 @@
 
       --font:         'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       --mono:         'JetBrains Mono', 'Fira Code', monospace;
+
+      /* Type scale — single source of truth. No ad-hoc or half-pixel sizes. */
+      --fs-xs:    11px;   /* eyebrows, fine print, mono labels, tags */
+      --fs-sm:    13px;   /* secondary body, captions, code */
+      --fs-md:    14px;   /* buttons, dense UI text */
+      --fs-base:  15px;   /* primary body, large buttons */
+      --fs-lg:    17px;   /* lead, h3, logo */
+      --fs-xl:    22px;
+      --fs-2xl:   34px;
+      /* display + h2 keep their clamp() definitions below */
 
       --r-sm:   6px;
       --r:      10px;
@@ -74,6 +165,31 @@
     a:hover { text-decoration: underline; }
 
     /* ─────────────────────────────────────────
+       ACCESSIBILITY
+    ───────────────────────────────────────── */
+    /* Visible keyboard focus on every interactive element */
+    a:focus-visible,
+    .btn:focus-visible,
+    .nav-link:focus-visible,
+    .faq-q:focus-visible,
+    .wtab:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: var(--r-sm);
+    }
+
+    /* Respect users who ask the OS to reduce motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* ─────────────────────────────────────────
        LAYOUT
     ───────────────────────────────────────── */
     .wrap {
@@ -84,12 +200,15 @@
 
     section { padding: var(--gap) 0; }
 
+    /* Offset anchor targets so headings clear the fixed 62px nav */
+    section[id], [id] { scroll-margin-top: 80px; }
+
     /* ─────────────────────────────────────────
        TYPE SCALE
     ───────────────────────────────────────── */
     .eyebrow {
       display: inline-block;
-      font-size: 11px;
+      font-size: var(--fs-xs);
       font-weight: 600;
       letter-spacing: 0.14em;
       text-transform: uppercase;
@@ -119,14 +238,14 @@
     }
 
     h3 {
-      font-size: 17px;
+      font-size: var(--fs-lg);
       font-weight: 600;
       letter-spacing: -0.01em;
       color: var(--text);
     }
 
     .lead {
-      font-size: 17px;
+      font-size: var(--fs-lg);
       line-height: 1.7;
       color: var(--text-2);
       max-width: 50ch;
@@ -141,7 +260,7 @@
       align-items: center;
       gap: 8px;
       font-family: var(--font);
-      font-size: 14px;
+      font-size: var(--fs-md);
       font-weight: 600;
       padding: 11px 22px;
       border-radius: var(--r-sm);
@@ -178,7 +297,7 @@
       border-color: var(--text-3);
     }
 
-    .btn-lg { font-size: 15px; padding: 13px 26px; }
+    .btn-lg { font-size: var(--fs-base); padding: 13px 26px; }
 
     /* ─────────────────────────────────────────
        NAV
@@ -209,7 +328,7 @@
     }
 
     .nav-logo {
-      font-size: 17px;
+      font-size: var(--fs-lg);
       font-weight: 700;
       letter-spacing: -0.05em;
       color: var(--text);
@@ -225,7 +344,7 @@
     }
 
     .nav-link {
-      font-size: 13px;
+      font-size: var(--fs-sm);
       font-weight: 500;
       color: var(--text-2);
       padding: 6px 12px;
@@ -236,6 +355,16 @@
 
     .nav-link:hover { color: var(--text); text-decoration: none; }
 
+    .nav-burger {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text);
+      padding: 8px;
+      margin: -8px;
+    }
+
     /* ─────────────────────────────────────────
        HERO
     ───────────────────────────────────────── */
@@ -243,22 +372,6 @@
       padding: 152px 0 72px;
       position: relative;
       overflow: hidden;
-    }
-
-    /* Radial glow from top */
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -60px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 900px;
-      height: 480px;
-      background: radial-gradient(ellipse at center top,
-        rgba(0, 200, 151, 0.09) 0%,
-        rgba(0, 200, 151, 0.03) 40%,
-        transparent 70%);
-      pointer-events: none;
     }
 
     .hero-grid {
@@ -272,7 +385,7 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 12px;
+      font-size: var(--fs-sm);
       font-weight: 500;
       color: var(--accent);
       background: var(--accent-dim);
@@ -315,7 +428,7 @@
       display: flex;
       align-items: center;
       gap: 7px;
-      font-size: 12px;
+      font-size: var(--fs-sm);
       color: var(--text-3);
     }
 
@@ -357,7 +470,7 @@
 
     .wtab {
       font-family: var(--mono);
-      font-size: 11px;
+      font-size: var(--fs-xs);
       padding: 4px 10px;
       border-radius: 4px;
       cursor: pointer;
@@ -378,22 +491,23 @@
 
     .win-body pre {
       font-family: var(--mono);
-      font-size: 12.5px;
+      font-size: var(--fs-sm);
       line-height: 1.75;
       tab-size: 2;
       margin: 0;
     }
 
-    /* Dracula-inspired palette — not default Prism */
-    .kw  { color: #FF79C6; }   /* keyword/import */
-    .fn  { color: #50FA7B; }   /* function call */
-    .st  { color: #F1FA8C; }   /* string */
-    .nm  { color: #BD93F9; }   /* number */
-    .cm  { color: #5A6478; font-style: italic; } /* comment */
-    .cl  { color: #8BE9FD; }   /* class/type */
-    .pu  { color: #AAB2C0; }   /* punctuation */
-    .vr  { color: #E2E8F2; }   /* variable */
-    .op  { color: #FF79C6; }   /* operator */
+    /* Restrained palette — anchored on the teal brand, two muted literals, neutrals.
+       Replaces the Dracula rainbow that fought the single-accent identity. */
+    .kw  { color: #8F9AB8; }            /* keyword/import — muted slate-blue */
+    .fn  { color: var(--accent); }      /* function call — brand teal */
+    .st  { color: #A8B89C; }            /* string — muted sage */
+    .nm  { color: #C2A98E; }            /* number — muted clay */
+    .cm  { color: #4E586C; font-style: italic; } /* comment — dim */
+    .cl  { color: #6FD3C0; }            /* class/type — soft teal */
+    .pu  { color: #6B7488; }            /* punctuation — dim */
+    .vr  { color: #CBD3E1; }            /* variable */
+    .op  { color: #8F9AB8; }            /* operator — matches keyword */
 
     .code-pane { display: none; }
     .code-pane.on { display: block; }
@@ -409,7 +523,7 @@
       align-items: center;
       gap: 10px;
       font-family: var(--mono);
-      font-size: 11px;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       margin-bottom: 10px;
     }
@@ -418,7 +532,7 @@
       background: rgba(0, 200, 151, 0.15);
       color: var(--accent);
       font-family: var(--mono);
-      font-size: 11px;
+      font-size: var(--fs-xs);
       padding: 2px 8px;
       border-radius: 4px;
     }
@@ -439,10 +553,11 @@
       gap: 14px;
     }
 
-    .mandate-icon { font-size: 17px; line-height: 1.6; flex-shrink: 0; }
+    .mandate-icon { flex-shrink: 0; color: var(--warn); display: flex; padding-top: 1px; }
+    .mandate-icon svg { width: 18px; height: 18px; }
 
     .mandate p {
-      font-size: 13.5px;
+      font-size: var(--fs-sm);
       color: var(--text-2);
       line-height: 1.6;
     }
@@ -474,27 +589,27 @@
 
     .prob-n {
       font-family: var(--mono);
-      font-size: 11px;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       padding-top: 3px;
     }
 
     .prob-body h4 {
-      font-size: 14px;
+      font-size: var(--fs-md);
       font-weight: 600;
       margin-bottom: 3px;
       color: var(--text);
     }
 
     .prob-body p {
-      font-size: 13px;
+      font-size: var(--fs-sm);
       color: var(--text-2);
       line-height: 1.55;
     }
 
     .prob-body code {
       font-family: var(--mono);
-      font-size: 11.5px;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       background: var(--surface-2);
       padding: 1px 5px;
@@ -502,7 +617,7 @@
     }
 
     .tag {
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       font-weight: 600;
       padding: 3px 8px;
       border-radius: 4px;
@@ -523,8 +638,8 @@
       border-radius: var(--r-lg);
     }
 
-    .or-call h3 { font-size: 22px; color: var(--text); }
-    .or-call p  { font-size: 13px; color: var(--text-3); margin-top: 6px; }
+    .or-call h3 { font-size: var(--fs-xl); color: var(--text); }
+    .or-call p  { font-size: var(--fs-sm); color: var(--text-3); margin-top: 6px; }
 
     /* ─────────────────────────────────────────
        HOW IT WORKS
@@ -546,7 +661,7 @@
 
     .step-n {
       font-family: var(--mono);
-      font-size: 10px;
+      font-size: var(--fs-xs);
       font-weight: 500;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -554,10 +669,10 @@
       margin-bottom: 14px;
     }
 
-    .step h3 { font-size: 17px; margin-bottom: 8px; }
+    .step h3 { font-size: var(--fs-lg); margin-bottom: 8px; }
 
     .step p {
-      font-size: 13.5px;
+      font-size: var(--fs-sm);
       color: var(--text-2);
       line-height: 1.65;
     }
@@ -565,7 +680,7 @@
     .step-cmd {
       margin-top: 16px;
       font-family: var(--mono);
-      font-size: 12px;
+      font-size: var(--fs-sm);
       color: var(--text-3);
       background: var(--bg);
       border: 1px solid var(--border-dim);
@@ -602,7 +717,7 @@
     }
 
     .arch-box .ab-name {
-      font-size: 13px;
+      font-size: var(--fs-sm);
       font-weight: 600;
       color: var(--text);
     }
@@ -611,7 +726,7 @@
 
     .arch-box .ab-sub {
       font-family: var(--mono);
-      font-size: 10px;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       margin-top: 4px;
     }
@@ -636,12 +751,12 @@
       right: -5px;
       top: -8px;
       color: var(--accent);
-      font-size: 14px;
+      font-size: var(--fs-md);
     }
 
     .arch-arr-lbl {
       font-family: var(--mono);
-      font-size: 9.5px;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       margin-top: 5px;
       white-space: nowrap;
@@ -678,17 +793,19 @@
       align-items: center;
       justify-content: center;
       margin-bottom: 14px;
-      font-size: 15px;
+      color: var(--accent);
     }
 
-    .feat h3 { font-size: 14.5px; margin-bottom: 7px; }
+    .feat-ico svg { width: 17px; height: 17px; }
 
-    .feat p { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+    .feat h3 { font-size: var(--fs-md); margin-bottom: 7px; }
+
+    .feat p { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.6; }
 
     .feat-spec {
       margin-top: 11px;
       font-family: var(--mono);
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       display: flex;
       align-items: center;
@@ -726,7 +843,7 @@
     }
 
     .pc-tier {
-      font-size: 11px;
+      font-size: var(--fs-xs);
       font-weight: 600;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -742,15 +859,15 @@
     }
 
     .pc-amount {
-      font-size: 34px;
+      font-size: var(--fs-2xl);
       font-weight: 700;
       letter-spacing: -0.04em;
       color: var(--text);
     }
 
-    .pc-unit { font-size: 13px; color: var(--text-2); }
+    .pc-unit { font-size: var(--fs-sm); color: var(--text-2); }
 
-    .pc-desc { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+    .pc-desc { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.55; }
 
     .pc-list {
       list-style: none;
@@ -761,7 +878,7 @@
     }
 
     .pc-list li {
-      font-size: 13px;
+      font-size: var(--fs-sm);
       color: var(--text-2);
       display: flex;
       gap: 10px;
@@ -802,7 +919,7 @@
       align-items: center;
       gap: 16px;
       font-family: var(--font);
-      font-size: 14.5px;
+      font-size: var(--fs-md);
       font-weight: 500;
       color: var(--text);
       cursor: pointer;
@@ -819,7 +936,7 @@
       border-radius: 50%;
       display: grid;
       place-items: center;
-      font-size: 11px;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       transition: transform 0.22s;
     }
@@ -836,14 +953,14 @@
       padding: 0 22px 18px;
       border-top: 1px solid var(--border-dim);
       padding-top: 14px;
-      font-size: 13.5px;
+      font-size: var(--fs-sm);
       color: var(--text-2);
       line-height: 1.75;
     }
 
     .faq-ans-inner code {
       font-family: var(--mono);
-      font-size: 12px;
+      font-size: var(--fs-sm);
       background: var(--surface-2);
       padding: 1px 6px;
       border-radius: 3px;
@@ -876,7 +993,7 @@
 
     .wl-note {
       margin-top: 22px;
-      font-size: 13px;
+      font-size: var(--fs-sm);
       color: var(--text-3);
       line-height: 1.6;
     }
@@ -886,7 +1003,7 @@
       display: flex;
       align-items: flex-start;
       gap: 10px;
-      font-size: 13px;
+      font-size: var(--fs-sm);
       color: var(--text-3);
       line-height: 1.55;
     }
@@ -899,14 +1016,14 @@
     .fg { display: flex; flex-direction: column; gap: 5px; }
 
     label {
-      font-size: 12.5px;
+      font-size: var(--fs-sm);
       font-weight: 500;
       color: var(--text-2);
     }
 
     input, select, textarea {
       font-family: var(--font);
-      font-size: 14px;
+      font-size: var(--fs-md);
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: var(--r-sm);
@@ -940,7 +1057,7 @@
     .form-submit { margin-top: 4px; width: 100%; justify-content: center; }
 
     .form-fine {
-      font-size: 11.5px;
+      font-size: var(--fs-xs);
       color: var(--text-3);
       text-align: center;
       line-height: 1.6;
@@ -957,7 +1074,7 @@
 
     .form-success .check { font-size: 30px; margin-bottom: 14px; }
     .form-success h3 { color: var(--accent); margin-bottom: 8px; }
-    .form-success p { font-size: 14px; line-height: 1.65; }
+    .form-success p { font-size: var(--fs-md); line-height: 1.65; }
 
     /* ─────────────────────────────────────────
        FOOTER
@@ -978,7 +1095,7 @@
     .footer-links { display: flex; gap: 22px; flex-wrap: wrap; }
 
     .footer-links a {
-      font-size: 13px;
+      font-size: var(--fs-sm);
       color: var(--text-3);
       text-decoration: none;
       transition: color 0.13s;
@@ -986,7 +1103,7 @@
 
     .footer-links a:hover { color: var(--text-2); }
 
-    .footer-copy { font-size: 12.5px; color: var(--text-3); }
+    .footer-copy { font-size: var(--fs-sm); color: var(--text-3); }
 
     /* ─────────────────────────────────────────
        DIVIDER / UTILS
@@ -1008,14 +1125,62 @@
       .feat-grid     { grid-template-columns: repeat(2, 1fr); }
       .pricing-grid  { grid-template-columns: 1fr; max-width: 400px; }
       .waitlist-grid { grid-template-columns: 1fr; gap: 44px; }
-      .arch          { flex-wrap: wrap; gap: 6px; }
+
+      /* Architecture diagram stacks vertically — rotate connectors to point down */
+      .arch          { flex-direction: column; gap: 4px; }
+      .arch-box      { width: 100%; max-width: 260px; }
+      .arch-arr      { padding: 4px 0; }
+      .arch-arr-line {
+        width: 1px;
+        height: 26px;
+        background: linear-gradient(180deg, var(--border), var(--accent), var(--border));
+      }
+      .arch-arr-line::after {
+        right: auto;
+        top: auto;
+        left: -5px;
+        bottom: -10px;
+        transform: rotate(90deg);
+      }
+      .arch-arr-lbl  { margin-top: 2px; }
     }
 
     @media (max-width: 640px) {
       .feat-grid   { grid-template-columns: 1fr; }
       .form-row-2  { grid-template-columns: 1fr; }
       .hero        { padding-top: 110px; }
-      .nav-link    { display: none; }
+
+      /* Mobile nav: collapse links into a burger-triggered dropdown */
+      .nav-burger  { display: flex; }
+      .nav-links {
+        position: absolute;
+        top: 62px;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 8px 24px 18px;
+        background: rgba(7, 9, 15, 0.97);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border-dim);
+        display: none;
+      }
+      #nav.menu-open .nav-links { display: flex; }
+      .nav-links .nav-link {
+        display: block;
+        padding: 13px 0;
+        font-size: var(--fs-base);
+        border-bottom: 1px solid var(--border-dim);
+      }
+      .nav-links .btn-primary {
+        margin: 14px 0 0 !important;
+        width: 100%;
+        justify-content: center;
+        font-size: var(--fs-base) !important;
+        padding: 12px 18px !important;
+      }
     }
   </style>
 </head>
@@ -1027,14 +1192,17 @@
 <nav id="nav">
   <div class="nav-row">
     <a href="#" class="nav-logo">Tax<span>ID</span></a>
-    <div class="nav-links">
+    <div class="nav-links" id="nav-links">
       <a href="#how-it-works" class="nav-link">How it works</a>
       <a href="#features" class="nav-link">Features</a>
       <a href="https://docs.taxid.co.ke" target="_blank" class="nav-link">Docs</a>
-      <a href="#waitlist" class="btn btn-primary" style="margin-left: 8px; font-size: 13px; padding: 8px 18px;">
+      <a href="#waitlist" class="btn btn-primary" style="margin-left: 8px; font-size: var(--fs-sm); padding: 8px 18px;">
         Get sandbox access
       </a>
     </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-links" onclick="toggleMenu()">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
   </div>
 </nav>
 
@@ -1058,13 +1226,13 @@
 
         <p class="lead">
           TaxID manages your VSCU JAR, cmcKey lifecycle, offline queuing, and Z-reports.
-          Your team makes one API call. We handle everything KRA requires.
+          Your team makes one API call. We handle everything the VSCU integration requires.
         </p>
 
         <div class="hero-actions">
           <a href="#waitlist" class="btn btn-primary btn-lg">
             Get sandbox access
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
           <a href="https://docs.taxid.co.ke" target="_blank" class="btn btn-ghost btn-lg">
             Browse the docs
@@ -1073,15 +1241,15 @@
 
         <div class="hero-trust">
           <span class="trust-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             VSCU Spec v2.0 compliant
           </span>
           <span class="trust-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             AES-256-GCM at rest
           </span>
           <span class="trust-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             KDPA 2019 §4.7
           </span>
         </div>
@@ -1107,23 +1275,14 @@
             <div id="pane-py" class="code-pane on">
 <pre><span class="kw">from</span> <span class="cl">kra_etims_sdk</span> <span class="kw">import</span> <span class="cl">TaxIDClient</span>
 
-client <span class="op">=</span> <span class="cl">TaxIDClient</span><span class="pu">(</span>
-    client_id<span class="op">=</span><span class="st">"txs_sb_••••••••"</span><span class="pu">,</span>
-    client_secret<span class="op">=</span><span class="st">"sk_sb_••••••••••••"</span>
-<span class="pu">)</span>
+client <span class="op">=</span> <span class="cl">TaxIDClient</span><span class="pu">(</span><span class="st">"txs_sb_••••••••"</span><span class="pu">,</span> <span class="st">"sk_sb_••••••••••••"</span><span class="pu">)</span>
 
 receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn">sign_sale</span><span class="pu">(</span>
-    supplier_pin<span class="op">=</span><span class="st">"A000123456B"</span><span class="pu">,</span>
-    amount<span class="op">=</span><span class="nm">5800.00</span><span class="pu">,</span>
-    tax_band<span class="op">=</span><span class="st">"B"</span><span class="pu">,</span>          <span class="cm"># 16% standard VAT</span>
-    tax_amount<span class="op">=</span><span class="nm">800.00</span><span class="pu">,</span>
-    buyer_pin<span class="op">=</span><span class="st">"P051234567X"</span><span class="pu">,</span>
-    buyer_name<span class="op">=</span><span class="st">"Acacia Enterprises Ltd"</span><span class="pu">,</span>
-    item_description<span class="op">=</span><span class="st">"MacBook Pro M3"</span>
+    supplier_pin<span class="op">=</span><span class="st">"A000123456B"</span><span class="pu">,</span> amount<span class="op">=</span><span class="nm">5800.00</span><span class="pu">,</span>
+    tax_band<span class="op">=</span><span class="st">"B"</span><span class="pu">,</span> tax_amount<span class="op">=</span><span class="nm">800.00</span><span class="pu">,</span>        <span class="cm"># Band B = 16% VAT</span>
+    buyer_pin<span class="op">=</span><span class="st">"P051234567X"</span><span class="pu">,</span> item_description<span class="op">=</span><span class="st">"MacBook Pro M3"</span><span class="pu">,</span>
 <span class="pu">)</span>
-
-<span class="fn">print</span><span class="pu">(</span>receipt<span class="pu">.</span>cu_invoice_number<span class="pu">)</span>
-<span class="cm"># KRACU0100000001/152 NS</span></pre>
+<span class="fn">print</span><span class="pu">(</span>receipt<span class="pu">.</span>cu_invoice_number<span class="pu">)</span>            <span class="cm"># KRACU0100000001/152 NS</span></pre>
             </div>
 
             <div id="pane-curl" class="code-pane">
@@ -1147,7 +1306,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
               Response
               <span class="badge-200">200 OK · SIGNED</span>
             </div>
-<pre style="font-family:var(--mono);font-size:12px;line-height:1.7"><span class="pu">{</span>
+<pre style="font-family:var(--mono);font-size:var(--fs-sm);line-height:1.7"><span class="pu">{</span>
   <span class="st">"status"</span><span class="pu">:</span>           <span class="st">"SIGNED"</span><span class="pu">,</span>
   <span class="st">"purchaseId"</span><span class="pu">:</span>      <span class="nm">152</span><span class="pu">,</span>
   <span class="st">"cuInvoiceNumber"</span><span class="pu">:</span> <span class="st">"KRACU0100000001/152 NS"</span><span class="pu">,</span>
@@ -1171,12 +1330,14 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
 <div class="mandate">
   <div class="wrap">
     <div class="mandate-row">
-      <span class="mandate-icon">⚖️</span>
+      <span class="mandate-icon">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+      </span>
       <p>
         <strong>KRA eTIMS is law, not a recommendation.</strong>
-        Effective 1 January 2026, every VAT-registered business in Kenya must transmit invoices in real-time via eTIMS.
+        In force since 1 January 2026, every VAT-registered business in Kenya must transmit invoices in real-time via eTIMS.
         Non-compliant invoices are ineligible for expense deduction under Section 16(1)(c) of the Income Tax Act —
-        and iTax is actively cross-referencing 2025 expense claims against PIN numbers on transmitted invoices.
+        and iTax is now actively cross-referencing 2025 expense claims against PIN numbers on transmitted invoices.
       </p>
     </div>
   </div>
@@ -1343,42 +1504,54 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     <div class="section-head">
       <span class="eyebrow">What's included</span>
       <h2>Production-grade compliance infrastructure, fully managed.</h2>
-      <p class="lead">Every feature below is live and battle-tested against KRA's sandbox environment.</p>
+      <p class="lead">Every feature below is live and validated against KRA's sandbox environment.</p>
     </div>
 
     <div class="feat-grid">
       <div class="feat">
-        <div class="feat-ico">⚡</div>
+        <div class="feat-ico">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+        </div>
         <h3>Offline-first resilience</h3>
         <p>PostgreSQL-backed queue survives pod restarts. Three-phase outbox ensures the VSCU is never called twice for the same transaction — no duplicate receipt numbers. Replay in chronological order on KRA restore.</p>
         <div class="feat-spec">SHA-256 payload validation · exponential backoff</div>
       </div>
       <div class="feat">
-        <div class="feat-ico">📋</div>
+        <div class="feat-ico">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+        </div>
         <h3>Automated Z-reports</h3>
         <p>Daily Z-reports auto-submit at 23:59 EAT. Bounded to 3 retry attempts — the VSCU day-reset is irreversible per KRA TIS v2.0 §21.6.1. After 3 failures, a CRITICAL alert fires and automatic retrying permanently stops.</p>
         <div class="feat-spec">ZReportScheduler · DailyZReportRetryWorker</div>
       </div>
       <div class="feat">
-        <div class="feat-ico">🔒</div>
+        <div class="feat-ico">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </div>
         <h3>Strict tenant isolation</h3>
         <p>Row-level security enforced at the PostgreSQL layer. Distinct AES-256-GCM keys per branch. Branch 001 cannot read Branch 002's Electronic Journal or cmcKey — guaranteed at the database constraint level, not just application logic.</p>
         <div class="feat-spec">pgcrypto · per-branch key material · KDPA §4.7</div>
       </div>
       <div class="feat">
-        <div class="feat-ico">💬</div>
+        <div class="feat-ico">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
         <h3>Supplier onboarding gateway</h3>
         <p>Send unregistered suppliers a confirmation request via SMS or WhatsApp. On YES reply, TaxID generates a Category 5 reverse invoice on their behalf. For suppliers below KShs 5M turnover who can't issue eTIMS receipts independently.</p>
         <div class="feat-spec">Africa's Talking · WhatsApp Cloud API</div>
       </div>
       <div class="feat">
-        <div class="feat-ico">🔍</div>
+        <div class="feat-ico">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
         <h3>Receipt integrity monitoring</h3>
-        <p>Monotonic sequence counter on every <code style="font-family:var(--mono);font-size:11px;color:var(--text-3)">rcptNo</code>. Continuous gap and duplicate detection. Physical database constraint on <code style="font-family:var(--mono);font-size:11px;color:var(--text-3)">(sdc_id, rcpt_sequence_number)</code>. You know before KRA does.</p>
+        <p>Monotonic sequence counter on every <code style="font-family:var(--mono);font-size:var(--fs-xs);color:var(--text-3)">rcptNo</code>. Continuous gap and duplicate detection. Physical database constraint on <code style="font-family:var(--mono);font-size:var(--fs-xs);color:var(--text-3)">(sdc_id, rcpt_sequence_number)</code>. You know before KRA does.</p>
         <div class="feat-spec">KRA_AUDIT_RISK error class · DB UNIQUE constraint</div>
       </div>
       <div class="feat">
-        <div class="feat-ico">🔑</div>
+        <div class="feat-ico">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+        </div>
         <h3>cmcKey lifecycle management</h3>
         <p>AES-256-GCM encrypted at rest. Zero-downtime hot rotation without a pod restart. Version-tracked per device — every rotation increments an audit column. The raw key never appears in logs, stack traces, or API responses.</p>
         <div class="feat-spec">CmcKeyRotationService · version-tracked per device</div>
@@ -1401,7 +1574,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     </p>
     <a href="#waitlist" class="btn btn-primary btn-lg" style="margin-top:32px">
       Join the waitlist
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </a>
   </div>
 </section>
@@ -1420,7 +1593,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     <div class="faq-list">
 
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">
+        <button class="faq-q" onclick="faq(this)" aria-expanded="false">
           Is TaxID approved by KRA?
           <span class="faq-chev">↓</span>
         </button>
@@ -1429,13 +1602,13 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
             We are currently pursuing KRA VSP (VSCU Service Provider) certification.
             The sandbox environment runs against KRA's own test infrastructure.
             Production credentials will be issued after certification completes.
-            We will notify everyone on the waitlist when production access opens — we are not going to quietly slip that past you.
+            Everyone on the waitlist is notified when production access opens.
           </div>
         </div>
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">
+        <button class="faq-q" onclick="faq(this)" aria-expanded="false">
           What happens if TaxID has an outage?
           <span class="faq-chev">↓</span>
         </button>
@@ -1452,7 +1625,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">
+        <button class="faq-q" onclick="faq(this)" aria-expanded="false">
           I'm building a POS that will serve multiple merchants. How does multi-tenant work?
           <span class="faq-chev">↓</span>
         </button>
@@ -1468,7 +1641,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">
+        <button class="faq-q" onclick="faq(this)" aria-expanded="false">
           Which tax band do I use for standard 16% VAT? I've seen conflicting information.
           <span class="faq-chev">↓</span>
         </button>
@@ -1485,7 +1658,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">
+        <button class="faq-q" onclick="faq(this)" aria-expanded="false">
           What's the difference between VSCU and OSCU?
           <span class="faq-chev">↓</span>
         </button>
@@ -1500,7 +1673,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
       </div>
 
       <div class="faq-item">
-        <button class="faq-q" onclick="faq(this)">
+        <button class="faq-q" onclick="faq(this)" aria-expanded="false">
           What languages and frameworks are supported?
           <span class="faq-chev">↓</span>
         </button>
@@ -1536,8 +1709,8 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
           Production access opens after KRA VSP certification. Everyone on this list gets notified first, ahead of any public launch.
         </p>
         <div class="wl-stat">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span>Developers already waiting from POS, ERP, accounting SaaS, and SACCO platforms across Kenya.</span>
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Early access is hands-on — you work directly with the engineers who built the VSCU integration, not a support queue.</span>
         </div>
       </div>
 
@@ -1589,7 +1762,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
             </div>
             <button type="submit" class="btn btn-primary btn-lg form-submit" id="wl-btn">
               Request sandbox access
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
             <p class="form-fine">
               No spam. No sales call unless you ask for one.<br>
@@ -1640,6 +1813,24 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
+  /* ── Mobile nav toggle ── */
+  function toggleMenu() {
+    const navEl = document.getElementById('nav');
+    const burger = document.getElementById('nav-burger');
+    const open = navEl.classList.toggle('menu-open');
+    burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  // Close the menu after tapping any in-page link
+  document.querySelectorAll('#nav-links a').forEach(a => {
+    a.addEventListener('click', () => {
+      const navEl = document.getElementById('nav');
+      if (navEl.classList.contains('menu-open')) {
+        navEl.classList.remove('menu-open');
+        document.getElementById('nav-burger').setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+
   /* ── Code tab switcher ── */
   function switchTab(btn, id) {
     document.querySelectorAll('.wtab').forEach(t => t.classList.remove('on'));
@@ -1658,11 +1849,13 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     document.querySelectorAll('.faq-item').forEach(i => {
       i.classList.remove('open');
       i.querySelector('.faq-ans').style.maxHeight = '0';
+      i.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
     });
 
     if (!open) {
       item.classList.add('open');
       ans.style.maxHeight = ans.scrollHeight + 'px';
+      btn.setAttribute('aria-expanded', 'true');
     }
   }
 
@@ -1702,6 +1895,44 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     document.getElementById('wl-form').style.display = 'none';
     document.getElementById('wl-success').style.display = 'block';
   }
+</script>
+
+<!-- ════════════════════════════════════════
+     LINKEDIN INSIGHT TAG
+     Inbound is LinkedIn-led — this enables conversion tracking + retargeting.
+     1. Set LINKEDIN_PARTNER_ID below to your numeric Partner ID
+        (LinkedIn Campaign Manager → Account Assets → Insight Tag).
+     2. The tag stays completely inert until a real ID is set, so it ships
+        no junk events in the meantime.
+     KDPA note: if you add consent management later, gate this behind consent.
+════════════════════════════════════════ -->
+<script>
+  (function () {
+    var LINKEDIN_PARTNER_ID = ""; // ← put your numeric Partner ID here, e.g. "1234567"
+    if (!LINKEDIN_PARTNER_ID) return; // inert until configured
+
+    window._linkedin_partner_id = LINKEDIN_PARTNER_ID;
+    window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
+    window._linkedin_data_partner_ids.push(LINKEDIN_PARTNER_ID);
+
+    (function (l) {
+      if (!l) {
+        window.lintrk = function (a, b) { window.lintrk.q.push([a, b]); };
+        window.lintrk.q = [];
+      }
+      var s = document.getElementsByTagName('script')[0];
+      var b = document.createElement('script');
+      b.type = 'text/javascript';
+      b.async = true;
+      b.src = 'https://snap.licdn.com/li.lms-analytics/insight.min.js';
+      s.parentNode.insertBefore(b, s);
+    })(window.lintrk);
+
+    var ns = document.createElement('noscript');
+    ns.innerHTML = '<img height="1" width="1" style="display:none" alt="" ' +
+      'src="https://px.ads.linkedin.com/collect/?pid=' + LINKEDIN_PARTNER_ID + '&fmt=gif" />';
+    document.body.appendChild(ns);
+  })();
 </script>
 
 </body>
