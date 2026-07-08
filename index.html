@@ -70,7 +70,7 @@
           {
             "@type": "Question",
             "name": "What languages and frameworks are supported?",
-            "acceptedAnswer": { "@type": "Answer", "text": "The core API is REST — any language that can make an HTTPS request works. There is a first-class Python SDK (kra-etims-sdk). Odoo, ERPNext, Sage, and custom Java/PHP backends integrate via REST. Node.js and PHP SDKs are planned." }
+            "acceptedAnswer": { "@type": "Answer", "text": "The core API is REST — any language that can make an HTTPS request works. There is a first-class Python SDK (pip install taxid-etims). Odoo, ERPNext, Sage, and custom Java/PHP backends integrate via REST. Node.js and PHP SDKs are planned." }
           }
         ]
       }
@@ -1273,25 +1273,29 @@
 
           <div class="win-body">
             <div id="pane-py" class="code-pane on">
-<pre><span class="kw">from</span> <span class="cl">kra_etims_sdk</span> <span class="kw">import</span> <span class="cl">TaxIDClient</span>
+<pre><span class="kw">from</span> <span class="cl">kra_etims</span> <span class="kw">import</span> <span class="cl">KRAeTIMSClient</span><span class="pu">,</span> <span class="cl">SaleInvoice</span><span class="pu">,</span> <span class="fn">calculate_item</span><span class="pu">,</span> <span class="fn">build_invoice_totals</span>
 
-client <span class="op">=</span> <span class="cl">TaxIDClient</span><span class="pu">(</span><span class="st">"txs_sb_••••••••"</span><span class="pu">,</span> <span class="st">"sk_sb_••••••••••••"</span><span class="pu">)</span>
+client <span class="op">=</span> <span class="cl">KRAeTIMSClient</span><span class="pu">(</span>client_id<span class="op">=</span><span class="st">"txs_sb_••••••••"</span><span class="pu">,</span> client_secret<span class="op">=</span><span class="st">"sk_sb_••••••••••••"</span><span class="pu">)</span>
 
-receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn">sign_sale</span><span class="pu">(</span>
-    supplier_pin<span class="op">=</span><span class="st">"A000123456B"</span><span class="pu">,</span> amount<span class="op">=</span><span class="nm">5800.00</span><span class="pu">,</span>
-    tax_band<span class="op">=</span><span class="st">"B"</span><span class="pu">,</span> tax_amount<span class="op">=</span><span class="nm">800.00</span><span class="pu">,</span>        <span class="cm"># Band B = 16% VAT</span>
-    buyer_pin<span class="op">=</span><span class="st">"P051234567X"</span><span class="pu">,</span> item_description<span class="op">=</span><span class="st">"MacBook Pro M3"</span><span class="pu">,</span>
+items <span class="op">=</span> <span class="pu">[</span><span class="fn">calculate_item</span><span class="pu">(</span><span class="st">"MacBook Pro M3"</span><span class="pu">,</span> <span class="st">"HS847130"</span><span class="pu">,</span> <span class="nm">5800</span><span class="pu">,</span> <span class="st">"B"</span><span class="pu">)]</span>  <span class="cm"># Band B = 16% VAT</span>
+receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn">submit_sale</span><span class="pu">(</span>
+    <span class="cl">SaleInvoice</span><span class="pu">(</span>tin<span class="op">=</span><span class="st">"A000123456B"</span><span class="pu">,</span> bhfId<span class="op">=</span><span class="st">"00"</span><span class="pu">,</span> invcNo<span class="op">=</span><span class="st">"INV-2026-001"</span><span class="pu">,</span>
+                custNm<span class="op">=</span><span class="st">"Acacia Enterprises Ltd"</span><span class="pu">,</span> confirmDt<span class="op">=</span><span class="st">"20260311120000"</span><span class="pu">,</span>
+                itemList<span class="op">=</span>items<span class="pu">,</span> <span class="op">**</span><span class="fn">build_invoice_totals</span><span class="pu">(</span>items<span class="pu">)),</span>
+    idempotency_key<span class="op">=</span><span class="st">"INV-2026-001"</span><span class="pu">,</span>
 <span class="pu">)</span>
-<span class="fn">print</span><span class="pu">(</span>receipt<span class="pu">.</span>cu_invoice_number<span class="pu">)</span>            <span class="cm"># KRACU0100000001/152 NS</span></pre>
+<span class="fn">print</span><span class="pu">(</span>receipt<span class="pu">[</span><span class="st">"cuInvoiceNumber"</span><span class="pu">])</span>       <span class="cm"># KRACU0100000001/152 NS</span></pre>
             </div>
 
             <div id="pane-curl" class="code-pane">
 <pre><span class="fn">curl</span> <span class="op">-X</span> POST https<span class="pu">://</span>api.taxid.co.ke/v2/etims/sale \
   <span class="op">-H</span> <span class="st">"X-API-Key: txs_sb_••••••••"</span> \
+  <span class="op">-H</span> <span class="st">"X-TIaaS-Idempotency-Key: INV-2026-001"</span> \
   <span class="op">-H</span> <span class="st">"Content-Type: application/json"</span> \
   <span class="op">-d</span> <span class="st">'{
     "supplierPin":     "A000123456B",
     "amount":          5800.00,
+    "invoiceDate":     "2026-03-11",
     "taxBand":         "B",
     "taxAmount":       800.00,
     "buyerPin":        "P051234567X",
@@ -1307,8 +1311,9 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
               <span class="badge-200">200 OK · SIGNED</span>
             </div>
 <pre style="font-family:var(--mono);font-size:var(--fs-sm);line-height:1.7"><span class="pu">{</span>
-  <span class="st">"status"</span><span class="pu">:</span>           <span class="st">"SIGNED"</span><span class="pu">,</span>
   <span class="st">"purchaseId"</span><span class="pu">:</span>      <span class="nm">152</span><span class="pu">,</span>
+  <span class="st">"status"</span><span class="pu">:</span>           <span class="st">"SIGNED"</span><span class="pu">,</span>
+  <span class="st">"type"</span><span class="pu">:</span>             <span class="st">"SALE"</span><span class="pu">,</span>
   <span class="st">"cuInvoiceNumber"</span><span class="pu">:</span> <span class="st">"KRACU0100000001/152 NS"</span><span class="pu">,</span>
   <span class="st">"sdcId"</span><span class="pu">:</span>           <span class="st">"KRACU0100000001"</span><span class="pu">,</span>
   <span class="st">"receiptSignature"</span><span class="pu">:</span><span class="st">"A1B2C3D4E5F6..."</span><span class="pu">,</span>
@@ -1452,7 +1457,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
         <div class="step-n">Step 02</div>
         <h3>Integrate</h3>
         <p>Install the Python SDK or call the REST API directly. One function call per transaction — sign a sale, issue a credit note, adjust stock. The offline queue and Z-reports require zero code on your end.</p>
-        <div class="step-cmd">pip install kra-etims-sdk</div>
+        <div class="step-cmd">pip install taxid-etims</div>
       </div>
       <div class="step">
         <div class="step-n">Step 03</div>
@@ -1680,7 +1685,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
         <div class="faq-ans">
           <div class="faq-ans-inner">
             The core API is REST — any language that can make an HTTPS request works.
-            We have a first-class Python SDK (<code>kra-etims-sdk</code>) built for high-throughput workloads.
+            We have a first-class Python SDK (<code>pip install taxid-etims</code>) built for high-throughput workloads.
             If your stack is Odoo, ERPNext, Sage, or a custom Java/PHP backend, the REST API integrates cleanly.
             Node.js and PHP SDKs are planned. Reach out if you need help scoping an integration for a specific ERP.
           </div>

@@ -73,13 +73,13 @@
   <div class="win">
     <div class="bar">
       <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-      <span class="tab">sign_sale.py</span>
+      <span class="tab">submit_sale.py</span>
     </div>
-    <div class="body"><span class="kw">from</span> <span class="cl">kra_etims_sdk</span> <span class="kw">import</span> <span class="cl">TaxIDClient</span>
+    <div class="body"><span class="kw">from</span> <span class="cl">kra_etims</span> <span class="kw">import</span> <span class="cl">KRAeTIMSClient</span><span class="pu">,</span> <span class="cl">SaleInvoice</span>
 
-receipt <span class="pu">=</span> client<span class="pu">.</span><span class="fn">sign_sale</span><span class="pu">(</span>
-    supplier_pin<span class="pu">=</span><span class="st">"A000123456B"</span><span class="pu">,</span>
-    amount<span class="pu">=</span><span class="nm">5800.00</span><span class="pu">,</span> tax_band<span class="pu">=</span><span class="st">"B"</span><span class="pu">,</span> <span class="cm"># 16% VAT</span>
+receipt <span class="pu">=</span> client<span class="pu">.</span><span class="fn">submit_sale</span><span class="pu">(</span>
+    invoice<span class="pu">,</span> <span class="cm"># Band B = 16% VAT</span>
+    idempotency_key<span class="pu">=</span><span class="st">"INV-2026-001"</span><span class="pu">,</span>
 <span class="pu">)</span></div>
     <div class="resp">
       <div class="rlbl">Response <span class="badge">200 OK · SIGNED</span></div>
