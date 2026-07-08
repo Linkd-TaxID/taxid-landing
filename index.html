@@ -1275,7 +1275,7 @@
             <div id="pane-py" class="code-pane on">
 <pre><span class="kw">from</span> <span class="cl">kra_etims</span> <span class="kw">import</span> <span class="cl">KRAeTIMSClient</span><span class="pu">,</span> <span class="cl">SaleInvoice</span><span class="pu">,</span> <span class="fn">calculate_item</span><span class="pu">,</span> <span class="fn">build_invoice_totals</span>
 
-client <span class="op">=</span> <span class="cl">KRAeTIMSClient</span><span class="pu">(</span>client_id<span class="op">=</span><span class="st">"txs_sb_••••••••"</span><span class="pu">,</span> client_secret<span class="op">=</span><span class="st">"sk_sb_••••••••••••"</span><span class="pu">)</span>
+client <span class="op">=</span> <span class="cl">KRAeTIMSClient</span><span class="pu">(</span><span class="st">""</span><span class="pu">,</span> <span class="st">""</span><span class="pu">,</span> api_key<span class="op">=</span><span class="st">"txd_sb_••••••••"</span><span class="pu">)</span>
 
 items <span class="op">=</span> <span class="pu">[</span><span class="fn">calculate_item</span><span class="pu">(</span><span class="st">"MacBook Pro M3"</span><span class="pu">,</span> <span class="st">"HS847130"</span><span class="pu">,</span> <span class="nm">5800</span><span class="pu">,</span> <span class="st">"B"</span><span class="pu">)]</span>  <span class="cm"># Band B = 16% VAT</span>
 receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn">submit_sale</span><span class="pu">(</span>
@@ -1289,7 +1289,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
 
             <div id="pane-curl" class="code-pane">
 <pre><span class="fn">curl</span> <span class="op">-X</span> POST https<span class="pu">://</span>api.taxid.co.ke/v2/etims/sale \
-  <span class="op">-H</span> <span class="st">"X-API-Key: txs_sb_••••••••"</span> \
+  <span class="op">-H</span> <span class="st">"X-API-Key: txd_sb_••••••••"</span> \
   <span class="op">-H</span> <span class="st">"X-TIaaS-Idempotency-Key: INV-2026-001"</span> \
   <span class="op">-H</span> <span class="st">"Content-Type: application/json"</span> \
   <span class="op">-d</span> <span class="st">'{
@@ -1450,7 +1450,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
       <div class="step">
         <div class="step-n">Step 01</div>
         <h3>Get credentials</h3>
-        <p>Fill in the form below. We provision your sandbox environment and send you a <code>client_id</code> and <code>client_secret</code> pointed at KRA's sandbox — the same VSCU device, isolated from production.</p>
+        <p>Fill in the form below. We provision your sandbox environment and send you an <code>X-API-Key</code> pointed at KRA's sandbox — the same VSCU device, isolated from production.</p>
         <div class="step-cmd">APP_ENVIRONMENT=SANDBOX</div>
       </div>
       <div class="step">
