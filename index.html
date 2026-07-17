@@ -1224,6 +1224,15 @@
       border: 1px solid rgba(176, 133, 40, 0.5);
       border-radius: 4px; padding: 2px 6px;
     }
+    .rc-sample.live {
+      color: #0E7A56;
+      border-color: rgba(14, 122, 86, 0.5);
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .rc-sample.live::before {
+      content: ""; width: 6px; height: 6px; border-radius: 50%;
+      background: #16A46F; box-shadow: 0 0 0 3px rgba(22, 164, 111, 0.18);
+    }
     .demo-receipt.empty {
       display: flex; align-items: center; justify-content: center; text-align: center;
       background: var(--bg); color: var(--text-3);
@@ -1649,7 +1658,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
 
       <div>
         <div id="demo-receipt" class="demo-receipt empty">Set an amount and a band, then press <b style="color:var(--text-2)">Sign this receipt</b> to build the fiscal receipt.</div>
-        <p class="demo-note">The tax math is real — the exact split the SDK sends to KRA. The signature and QR are sample-format; live ones come from KRA's control unit against your registration.</p>
+        <p class="demo-note" id="demo-note">The tax math is real — the exact split the SDK sends to KRA. The signature and QR shown here are sample-format.</p>
       </div>
     </div>
   </div>
@@ -2171,6 +2180,12 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
   /* ── Interactive "sign a test receipt" demo ── */
   (function () {
     var RATES = { A: 0, B: 0.16, C: 0, D: 0, E: 0.08 };
+    // Live-signing endpoint (the taxid-demo-sign Cloudflare Worker in ./worker).
+    // Set this to the URL that `npx wrangler deploy` prints, e.g.
+    //   "https://taxid-demo-sign.<your-subdomain>.workers.dev"
+    // While it is empty — or if the Worker is unreachable — the demo falls back
+    // to a clearly-labelled client-side sample, so the page never breaks.
+    var DEMO_SIGN_URL = "";
     var band = 'B';
     var amtEl = document.getElementById('demo-amt');
     if (!amtEl) return;
@@ -2204,43 +2219,123 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
       demoRecalc();
     };
 
+    var LIVE_NOTE = 'Signs a real receipt against KRA’s eTIMS sandbox — the control-unit ID, invoice number, signature and timestamp come straight back from KRA. The QR is representative (sandbox receipts don’t verify on KRA’s public portal); production receipts carry a scannable one.';
+    var SAMPLE_NOTE = 'Preview mode — the tax math is real (the exact split the SDK sends to KRA), but the signature and QR are sample-format because the live signing endpoint isn’t reachable right now. Once it’s live, these come straight from KRA’s sandbox control unit.';
+
+    // Render the receipt card. `r` carries the fiscal block; `live` picks the
+    // badge + honesty note. The merchant header is deliberately illustrative
+    // (a real KRA PIN never appears on this public page) — the SCU ID, invoice
+    // number, signature and timestamp are the parts that are genuinely live.
+    function renderReceipt(box, r, live) {
+      box.innerHTML =
+        '<div class="rc-sample' + (live ? ' live' : '') + '">' + (live ? 'LIVE · SANDBOX' : 'SAMPLE') + '</div>' +
+        '<div class="rc-c"><div class="rc-nm">DEMO MERCHANT LTD</div>' +
+        '<div class="rc-mut">Nairobi · PIN A000123456B · Branch 00</div></div>' +
+        '<hr><div class="rc-c rc-lab">Tax Invoice · ' + r.dmy + '</div><hr>' +
+        '<div class="rc-row"><span>Sale item</span><span>KES ' + fmt(r.gross) + ' <span class="rc-band">' + r.band + '</span></span></div>' +
+        '<hr><div class="rc-row rc-tot"><span>TOTAL</span><span>KES ' + fmt(r.gross) + '</span></div>' +
+        '<hr><div class="rc-lab rc-c">Net / VAT / Gross — Band ' + r.band + ' · ' + r.pct + '%</div>' +
+        '<div class="rc-row"><span>' + r.band + '</span><span>' + fmt(r.net) + ' / ' + fmt(r.vat) + ' / ' + fmt(r.gross) + '</span></div>' +
+        '<hr class="solid"><div class="rc-fisc">◆ eTIMS FISCAL RECEIPT ◆</div><hr class="solid">' +
+        '<dl class="rc-kv">' +
+          '<dt>SCU ID</dt><dd>' + esc(r.scu) + '</dd>' +
+          '<dt>CU Inv No</dt><dd>' + esc(r.cuInv) + '</dd>' +
+          '<dt>Rcpt Sign</dt><dd class="sig">' + esc(r.sig) + '</dd>' +
+          '<dt>Signed</dt><dd>' + esc(r.signed) + '</dd>' +
+        '</dl>' +
+        '<canvas class="rc-qr" width="242" height="242" aria-hidden="true"></canvas>' +
+        '<div class="rc-c rc-mut" style="font-size:10px;margin-top:2px">Powered by TaxID</div>';
+      drawQR(box.querySelector('.rc-qr'), r.qrSeed);
+      box.classList.remove('signing'); box.classList.add('revealed');
+      var note = document.getElementById('demo-note');
+      if (note) note.textContent = live ? LIVE_NOTE : SAMPLE_NOTE;
+    }
+
+    function esc(v) {
+      return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+      });
+    }
+
+    // Client-side sample: real tax math, generated fiscal block. Fallback only.
+    function sampleReceipt(s) {
+      var now = new Date();
+      var d = pad(now.getDate()) + pad(now.getMonth() + 1) + now.getFullYear();
+      var t = pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+      var scu = 'KRACU' + pad(1 + Math.floor(Math.random() * 8)) + '000000' + hex(2);
+      var inv = 100 + Math.floor(Math.random() * 900);
+      var sig = hex(16);
+      return {
+        band: band, pct: (s.rate * 100).toFixed(0),
+        net: s.net, vat: s.vat, gross: s.amt,
+        scu: scu, cuInv: scu + '/' + inv + ' NS', sig: sig,
+        dmy: d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4),
+        signed: d + ' ' + t, qrSeed: d + '#' + t + '#' + scu + '#' + sig,
+      };
+    }
+
+    // Map the Worker's SIGNED response into the render shape.
+    function liveReceipt(data) {
+      var ts = String(data.vscuTimestamp || '');           // YYYYMMDDhhmmss
+      var Y = ts.slice(0, 4), M = ts.slice(4, 6), D = ts.slice(6, 8), hms = ts.slice(8, 14);
+      var dmy8 = D + M + Y;
+      return {
+        band: data.band, pct: String(data.rate || '').replace('%', ''),
+        net: parseFloat(data.net), vat: parseFloat(data.vat), gross: parseFloat(data.gross),
+        scu: data.sdcId, cuInv: data.cuInvoiceNumber, sig: data.receiptSignature,
+        dmy: D + '/' + M + '/' + Y,
+        signed: dmy8 + ' ' + hms,
+        qrSeed: data.kraQrPayload || (dmy8 + '#' + hms + '#' + data.sdcId + '#' + data.receiptSignature),
+      };
+    }
+
     window.demoSign = function () {
       var btn = document.getElementById('demo-btn');
       var box = document.getElementById('demo-receipt');
+      var note = document.getElementById('demo-note');
       var s = calc();
-      var label = btn.textContent;
+      var label = btn.getAttribute('data-label') || btn.textContent;
+      btn.setAttribute('data-label', label);
       btn.disabled = true; btn.textContent = 'Signing…';
       box.classList.remove('empty', 'revealed'); box.classList.add('signing');
-      setTimeout(function () {
-        var now = new Date();
-        var d = pad(now.getDate()) + pad(now.getMonth() + 1) + now.getFullYear();
-        var t = pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
-        var scu = 'KRACU' + pad(1 + Math.floor(Math.random() * 8)) + '000000' + hex(2);
-        var inv = 100 + Math.floor(Math.random() * 900);
-        var sig = hex(16);
-        var pct = (s.rate * 100).toFixed(0);
-        box.innerHTML =
-          '<div class="rc-sample">SAMPLE</div>' +
-          '<div class="rc-c"><div class="rc-nm">DEMO MERCHANT LTD</div>' +
-          '<div class="rc-mut">Nairobi · PIN A000123456B · Branch 00</div></div>' +
-          '<hr><div class="rc-c rc-lab">Tax Invoice · ' + d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4) + '</div><hr>' +
-          '<div class="rc-row"><span>Sale item</span><span>KES ' + fmt(s.amt) + ' <span class="rc-band">' + band + '</span></span></div>' +
-          '<hr><div class="rc-row rc-tot"><span>TOTAL</span><span>KES ' + fmt(s.amt) + '</span></div>' +
-          '<hr><div class="rc-lab rc-c">Net / VAT / Gross — Band ' + band + ' · ' + pct + '%</div>' +
-          '<div class="rc-row"><span>' + band + '</span><span>' + fmt(s.net) + ' / ' + fmt(s.vat) + ' / ' + fmt(s.amt) + '</span></div>' +
-          '<hr class="solid"><div class="rc-fisc">◆ eTIMS FISCAL RECEIPT ◆</div><hr class="solid">' +
-          '<dl class="rc-kv">' +
-            '<dt>SCU ID</dt><dd>' + scu + '</dd>' +
-            '<dt>CU Inv No</dt><dd>' + scu + '/' + inv + ' NS</dd>' +
-            '<dt>Rcpt Sign</dt><dd class="sig">' + sig + '</dd>' +
-            '<dt>Signed</dt><dd>' + d + ' ' + t + '</dd>' +
-          '</dl>' +
-          '<canvas class="rc-qr" width="242" height="242" aria-hidden="true"></canvas>' +
-          '<div class="rc-c rc-mut" style="font-size:10px;margin-top:2px">Powered by TaxID</div>';
-        drawQR(box.querySelector('.rc-qr'), d + '#' + t + '#' + scu + '#' + sig);
-        box.classList.remove('signing'); box.classList.add('revealed');
-        btn.disabled = false; btn.textContent = label;
-      }, 560);
+
+      function finish() { btn.disabled = false; btn.textContent = label; }
+      function showSample() { renderReceipt(box, sampleReceipt(s), false); finish(); }
+      function showError(msg) {
+        box.classList.remove('signing'); box.classList.add('empty', 'revealed');
+        box.textContent = msg;
+        if (note) note.textContent = SAMPLE_NOTE;
+        finish();
+      }
+
+      // No live endpoint configured → sample, after a short beat for feel.
+      if (!DEMO_SIGN_URL) { setTimeout(showSample, 560); return; }
+
+      var ctl = new AbortController();
+      var to = setTimeout(function () { ctl.abort(); }, 25000);
+      fetch(DEMO_SIGN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: s.amt, band: band }),
+        signal: ctl.signal,
+      }).then(function (resp) {
+        return resp.json().then(function (data) { return { status: resp.status, data: data }; });
+      }).then(function (res) {
+        clearTimeout(to);
+        if (res.data && res.data.ok) {
+          renderReceipt(box, liveReceipt(res.data), true);
+          finish();
+        } else if (res.status === 429) {
+          showError((res.data && res.data.message) || 'The live demo is busy right now — give it a minute, then try again.');
+        } else {
+          // Reachable but didn't sign (validation, SUSPENDED, upstream): sample.
+          showSample();
+        }
+      }).catch(function () {
+        // Unreachable/timeout/CORS → graceful sample so the page never breaks.
+        clearTimeout(to);
+        showSample();
+      });
     };
 
     function drawQR(cv, seed) {
@@ -2258,6 +2353,13 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     }
 
     demoRecalc();
+
+    // When the live signing Worker is wired up, promote the note to describe
+    // the real-sandbox behaviour up front (before the first click).
+    (function () {
+      var note = document.getElementById('demo-note');
+      if (note && DEMO_SIGN_URL) note.textContent = LIVE_NOTE;
+    })();
   })();
 </script>
 

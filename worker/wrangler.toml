@@ -1,0 +1,26 @@
+# taxid-demo-sign — Cloudflare Worker that signs one live KRA-sandbox receipt
+# for the public demo on taxid.co.ke. Deploy runbook: see README.md.
+
+name = "taxid-demo-sign"
+main = "src/index.js"
+compatibility_date = "2025-07-01"
+
+# Neither the sandbox X-API-Key nor the device PIN is stored here — both are
+# encrypted secrets, never committed (a KRA PIN is identifying data and this
+# repo is public):
+#   npx wrangler secret put SANDBOX_API_KEY   # paste the SANDBOX_SDK_KEY value
+#   npx wrangler secret put SUPPLIER_PIN      # paste the sandbox device's KRA PIN
+
+# Rate limiter (optional but recommended). The Worker feature-detects the RL
+# binding: without it, signing still works but is unthrottled. To enable:
+#   npx wrangler kv namespace create RL
+# then paste the returned id below and uncomment:
+# [[kv_namespaces]]
+# binding = "RL"
+# id = "<paste-kv-namespace-id-here>"
+
+# Optional: serve from a custom route instead of the workers.dev subdomain.
+# Requires taxid.co.ke to be on Cloudflare DNS. Example:
+# routes = [
+#   { pattern = "demo.taxid.co.ke/sign", custom_domain = true }
+# ]
