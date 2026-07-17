@@ -380,6 +380,9 @@
       gap: 60px;
       align-items: center;
     }
+    /* Let the 1fr columns shrink so wide code scrolls inside the window instead of
+       blowing out the grid track (which reflowed the hero when tabs changed width). */
+    .hero-grid > div { min-width: 0; }
 
     .hero-pill {
       display: inline-flex;
@@ -487,7 +490,7 @@
       color: var(--text-2);
     }
 
-    .win-body { padding: 20px 22px; overflow-x: auto; }
+    .win-body { padding: 20px 22px; overflow-x: auto; display: grid; }
 
     .win-body pre {
       font-family: var(--mono);
@@ -509,8 +512,10 @@
     .vr  { color: #CBD3E1; }            /* variable */
     .op  { color: #8F9AB8; }            /* operator — matches keyword */
 
-    .code-pane { display: none; }
-    .code-pane.on { display: block; }
+    /* Stack both tabs in one grid cell so the window is always sized to the larger
+       tab in BOTH axes — switching python/curl can no longer resize or reflow it. */
+    .code-pane { grid-area: 1 / 1; min-width: 0; visibility: hidden; }
+    .code-pane.on { visibility: visible; }
 
     .win-response {
       border-top: 1px solid var(--border);
@@ -2160,29 +2165,8 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     document.getElementById('wl-success').style.display = 'block';
   }
 
-  /* ── Hero code window: lock height to the tallest tab so python↔curl never reflows ── */
-  function stabilizeWin() {
-    var body = document.querySelector('.hero .win-body');
-    if (!body) return;
-    var panes = [].slice.call(body.querySelectorAll('.code-pane'));
-    if (panes.length < 2) return;
-    var active = body.querySelector('.code-pane.on') || panes[0];
-    body.style.minHeight = '0px';
-    var max = 0;
-    panes.forEach(function (p) {
-      panes.forEach(function (q) { q.classList.toggle('on', q === p); });
-      if (body.scrollHeight > max) max = body.scrollHeight;
-    });
-    panes.forEach(function (q) { q.classList.toggle('on', q === active); });
-    body.style.minHeight = max + 'px';
-  }
-  window.addEventListener('load', stabilizeWin);
-  var _winRaf;
-  window.addEventListener('resize', function () {
-    if (_winRaf) cancelAnimationFrame(_winRaf);
-    _winRaf = requestAnimationFrame(stabilizeWin);
-  });
-  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(stabilizeWin); }
+  /* Hero code window: python/curl tab stability is handled entirely in CSS now —
+     both panes are grid-stacked, so switching tabs can't resize or reflow the window. */
 
   /* ── Interactive "sign a test receipt" demo ── */
   (function () {
