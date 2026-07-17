@@ -1116,6 +1116,167 @@
     }
 
     /* ─────────────────────────────────────────
+       INTERACTIVE DEMO — "sign a test receipt"
+    ───────────────────────────────────────── */
+    .demo-grid {
+      margin-top: 44px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 44px;
+      align-items: start;
+    }
+    .demo-field { margin-bottom: 22px; }
+    .demo-label {
+      display: block;
+      font-family: var(--mono);
+      font-size: var(--fs-xs);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 10px;
+    }
+    .demo-amount {
+      display: flex;
+      align-items: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 0 14px;
+      transition: border-color 0.13s;
+    }
+    .demo-amount:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+    .demo-amount .cur {
+      font-family: var(--mono);
+      font-size: var(--fs-sm);
+      color: var(--text-3);
+      padding-right: 10px;
+    }
+    .demo-amount input {
+      flex: 1; width: 100%;
+      background: transparent; border: 0; outline: 0;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: var(--fs-lg);
+      padding: 13px 0;
+      -moz-appearance: textfield;
+    }
+    .demo-amount input::-webkit-outer-spin-button,
+    .demo-amount input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .demo-bands { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .demo-band {
+      font-family: var(--mono);
+      padding: 9px 6px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      transition: border-color 0.13s, background 0.13s;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .demo-band b { display: block; font-size: var(--fs-md); color: var(--text); }
+    .demo-band .rate { font-size: 10px; color: var(--text-3); }
+    .demo-band:hover { border-color: var(--text-3); }
+    .demo-band.on { border-color: var(--accent); background: var(--accent-dim); }
+    .demo-band.on b, .demo-band.on .rate { color: var(--accent); }
+
+    .demo-split {
+      margin-top: 24px;
+      border: 1px solid var(--border-dim);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+    .demo-split-row {
+      display: flex; justify-content: space-between;
+      padding: 11px 16px;
+      font-family: var(--mono); font-size: var(--fs-sm);
+      border-bottom: 1px solid var(--border-dim);
+    }
+    .demo-split-row:last-child { border-bottom: 0; }
+    .demo-split-row span:first-child { color: var(--text-2); }
+    .demo-split-row span:last-child { color: var(--text); font-variant-numeric: tabular-nums; }
+    .demo-split-row.gross { background: var(--accent-dim); }
+    .demo-split-row.gross span { color: var(--accent); font-weight: 600; }
+
+    .demo-sign { margin-top: 24px; width: 100%; justify-content: center; }
+    .demo-sign[disabled] { opacity: 0.6; cursor: default; box-shadow: none; }
+
+    .demo-receipt {
+      background: #FCFBF7; color: #1A1D1A;
+      border-radius: var(--r);
+      padding: 22px 24px 26px;
+      font-family: var(--mono);
+      font-size: 12.5px; line-height: 1.55;
+      box-shadow: var(--shadow-lg);
+      min-height: 340px;
+      position: relative;
+    }
+    .rc-sample {
+      position: absolute; top: 12px; right: 12px;
+      font-family: var(--mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.14em; color: #B08528;
+      border: 1px solid rgba(176, 133, 40, 0.5);
+      border-radius: 4px; padding: 2px 6px;
+    }
+    .demo-receipt.empty {
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      background: var(--bg); color: var(--text-3);
+      border: 1px dashed var(--border);
+      box-shadow: none; font-family: var(--font); font-size: var(--fs-sm);
+      padding: 24px; line-height: 1.6;
+    }
+    .demo-receipt.signing { opacity: 0.45; }
+    @keyframes rc-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .demo-receipt.revealed { animation: rc-in 0.4s ease; }
+    .rc-c { text-align: center; }
+    .rc-nm { font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+    .rc-mut { color: #6A6F66; }
+    .demo-receipt hr { border: 0; border-top: 1px dashed #C9C7BE; margin: 11px 0; }
+    .demo-receipt hr.solid { border-top: 1px solid #C9C7BE; }
+    .rc-row { display: flex; justify-content: space-between; gap: 10px; }
+    .rc-lab { text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; color: #6A6F66; }
+    .rc-band { color: #0E7A5F; font-weight: 700; }
+    .rc-tot { font-weight: 700; font-size: 13.5px; }
+    .rc-fisc { text-align: center; color: #0E7A5F; font-weight: 700; letter-spacing: 0.12em; font-size: 11px; }
+    dl.rc-kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 8px 0 0; }
+    dl.rc-kv dt { color: #6A6F66; text-transform: uppercase; font-size: 10px; letter-spacing: 0.04em; white-space: nowrap; }
+    dl.rc-kv dd { margin: 0; text-align: right; word-break: break-all; }
+    dl.rc-kv dd.sig { color: #0E7A5F; }
+    .rc-qr { display: block; margin: 12px auto 4px; width: 118px; height: 118px; image-rendering: pixelated; }
+    .demo-note {
+      margin-top: 14px; font-size: var(--fs-xs); color: var(--text-3);
+      text-align: center; line-height: 1.55;
+    }
+
+    /* ─────────────────────────────────────────
+       SIGN-OFF BAND — for the finance decision-maker
+    ───────────────────────────────────────── */
+    .signoff-grid {
+      margin-top: 44px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .signoff-card { background: var(--surface); padding: 30px 28px; }
+    .signoff-ico {
+      width: 34px; height: 34px; border-radius: var(--r-sm);
+      background: var(--accent-dim); border: 1px solid var(--accent-mid);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px; color: var(--accent);
+    }
+    .signoff-ico svg { width: 17px; height: 17px; }
+    .signoff-card h3 { font-size: var(--fs-lg); margin-bottom: 9px; }
+    .signoff-card p { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.65; }
+    .signoff-spec {
+      margin-top: 13px; font-family: var(--mono); font-size: var(--fs-xs);
+      color: var(--text-3); letter-spacing: 0.02em;
+    }
+
+    /* ─────────────────────────────────────────
        RESPONSIVE
     ───────────────────────────────────────── */
     @media (max-width: 920px) {
@@ -1125,6 +1286,9 @@
       .feat-grid     { grid-template-columns: repeat(2, 1fr); }
       .pricing-grid  { grid-template-columns: 1fr; max-width: 400px; }
       .waitlist-grid { grid-template-columns: 1fr; gap: 44px; }
+      .demo-grid     { grid-template-columns: 1fr; gap: 32px; }
+      .signoff-grid  { grid-template-columns: 1fr; }
+      .demo-receipt  { min-height: 0; }
 
       /* Architecture diagram stacks vertically — rotate connectors to point down */
       .arch          { flex-direction: column; gap: 4px; }
@@ -1225,10 +1389,9 @@
         </h1>
 
         <p class="lead">
-          One call from your POS or ERP, one KRA-signed receipt back — offline-capable,
-          with the tax math, VSCU JAR, cmcKey lifecycle, and Z-reports all handled.
-          You never learn eTIMS. Neutral infrastructure: we power your product,
-          we never sell to your customers.
+          One call from your POS or ERP; a KRA-signed receipt comes back — offline-capable,
+          tax math included. We run the VSCU, cmcKey, and Z-reports so you never learn eTIMS.
+          Neutral infrastructure: we power your product, we never sell to your customers.
         </p>
 
         <div class="hero-actions">
@@ -1236,8 +1399,9 @@
             Get sandbox access
             <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
-          <a href="https://docs.taxid.co.ke" target="_blank" class="btn btn-ghost btn-lg">
-            Browse the docs
+          <a href="#try-it" class="btn btn-ghost btn-lg">
+            Sign a test receipt
+            <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
         </div>
 
@@ -1438,6 +1602,56 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
 
 
 <!-- ════════════════════════════════════════
+     INTERACTIVE DEMO
+════════════════════════════════════════ -->
+<section id="try-it" class="ruled">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Try it — no signup</span>
+      <h2>Change the numbers. Sign the receipt.</h2>
+      <p class="lead">Set a price and a tax band, then sign. The exact VAT split the SDK sends to KRA — and the fiscal receipt — build in front of you.</p>
+    </div>
+
+    <div class="demo-grid">
+      <div>
+        <div class="demo-field">
+          <label class="demo-label" for="demo-amt">Sale amount · VAT-inclusive</label>
+          <div class="demo-amount">
+            <span class="cur">KES</span>
+            <input id="demo-amt" type="number" min="0" step="1" value="5800" inputmode="decimal" oninput="demoRecalc()" aria-label="Sale amount in Kenyan shillings">
+          </div>
+        </div>
+
+        <div class="demo-field">
+          <span class="demo-label">Tax band</span>
+          <div class="demo-bands" role="group" aria-label="KRA tax band">
+            <button type="button" class="demo-band" data-band="A" aria-pressed="false" onclick="demoBand(this)"><b>A</b><span class="rate">Exempt · 0%</span></button>
+            <button type="button" class="demo-band on" data-band="B" aria-pressed="true" onclick="demoBand(this)"><b>B</b><span class="rate">Std · 16%</span></button>
+            <button type="button" class="demo-band" data-band="C" aria-pressed="false" onclick="demoBand(this)"><b>C</b><span class="rate">Zero · 0%</span></button>
+            <button type="button" class="demo-band" data-band="D" aria-pressed="false" onclick="demoBand(this)"><b>D</b><span class="rate">Non-VAT · 0%</span></button>
+            <button type="button" class="demo-band" data-band="E" aria-pressed="false" onclick="demoBand(this)"><b>E</b><span class="rate">Fuel · 8%</span></button>
+          </div>
+        </div>
+
+        <div class="demo-split" aria-live="polite">
+          <div class="demo-split-row"><span>Taxable (net)</span><span id="demo-net">—</span></div>
+          <div class="demo-split-row"><span>VAT</span><span id="demo-vat">—</span></div>
+          <div class="demo-split-row gross"><span>Total (gross)</span><span id="demo-gross">—</span></div>
+        </div>
+
+        <button type="button" id="demo-btn" class="btn btn-primary btn-lg demo-sign" onclick="demoSign()">Sign this receipt</button>
+      </div>
+
+      <div>
+        <div id="demo-receipt" class="demo-receipt empty">Set an amount and a band, then press <b style="color:var(--text-2)">Sign this receipt</b> to build the fiscal receipt.</div>
+        <p class="demo-note">The tax math is real — the exact split the SDK sends to KRA. The signature and QR are sample-format; live ones come from KRA's control unit against your registration.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
      HOW IT WORKS
 ════════════════════════════════════════ -->
 <section id="how-it-works" class="ruled">
@@ -1583,6 +1797,48 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
       Join the waitlist
       <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </a>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════
+     SIGN-OFF BAND (finance decision-maker)
+════════════════════════════════════════ -->
+<section id="for-finance">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">For the people who sign off</span>
+      <h2>What your finance team will want to know.</h2>
+      <p class="lead">Developers ask how fast they can integrate. Finance asks what the risk is. Three answers:</p>
+    </div>
+
+    <div class="signoff-grid">
+      <div class="signoff-card">
+        <div class="signoff-ico">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <h3>Deduction-safe invoicing</h3>
+        <p>Every receipt is KRA-signed and transmitted in real time. Non-compliant invoices lose expense deductibility under Section 16(1)(c) of the Income Tax Act — TaxID keeps every sale on the right side of that line.</p>
+        <div class="signoff-spec">Real-time · VSCU-signed · audit-ready journal</div>
+      </div>
+      <div class="signoff-card">
+        <div class="signoff-ico">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>
+        </div>
+        <h3>Cheaper than building it</h3>
+        <p>Self-hosting the VSCU can run past KES 1M in the first year once you count the build, the always-on infrastructure, and ongoing maintenance — before any fiscal risk. TaxID is a subscription and an afternoon's integration.</p>
+        <div class="signoff-spec">No build · no maintenance · no device ops</div>
+      </div>
+      <div class="signoff-card">
+        <div class="signoff-ico">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+        </div>
+        <h3>Continuity, no lock-in</h3>
+        <p>Signing keeps working through KRA outages, and the platform is maintained continuously. Your electronic journal is yours — exportable on demand — and the integration is standards-based, so you're never trapped in a proprietary format.</p>
+        <div class="signoff-spec">Offline-capable · exportable journal · no lock-in</div>
+      </div>
+    </div>
+    <p class="demo-note" style="margin-top:28px">KRA VSP certification is in progress — you can build and go live on the sandbox today. <a href="#faq">Certification &amp; security details →</a></p>
   </div>
 </section>
 
@@ -1903,6 +2159,122 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     document.getElementById('wl-form').style.display = 'none';
     document.getElementById('wl-success').style.display = 'block';
   }
+
+  /* ── Hero code window: lock height to the tallest tab so python↔curl never reflows ── */
+  function stabilizeWin() {
+    var body = document.querySelector('.hero .win-body');
+    if (!body) return;
+    var panes = [].slice.call(body.querySelectorAll('.code-pane'));
+    if (panes.length < 2) return;
+    var active = body.querySelector('.code-pane.on') || panes[0];
+    body.style.minHeight = '0px';
+    var max = 0;
+    panes.forEach(function (p) {
+      panes.forEach(function (q) { q.classList.toggle('on', q === p); });
+      if (body.scrollHeight > max) max = body.scrollHeight;
+    });
+    panes.forEach(function (q) { q.classList.toggle('on', q === active); });
+    body.style.minHeight = max + 'px';
+  }
+  window.addEventListener('load', stabilizeWin);
+  var _winRaf;
+  window.addEventListener('resize', function () {
+    if (_winRaf) cancelAnimationFrame(_winRaf);
+    _winRaf = requestAnimationFrame(stabilizeWin);
+  });
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(stabilizeWin); }
+
+  /* ── Interactive "sign a test receipt" demo ── */
+  (function () {
+    var RATES = { A: 0, B: 0.16, C: 0, D: 0, E: 0.08 };
+    var band = 'B';
+    var amtEl = document.getElementById('demo-amt');
+    if (!amtEl) return;
+
+    function round2(x) { return Math.round((x + Number.EPSILON) * 100) / 100; }
+    function fmt(x) { return x.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function hex(n) { var s = '', a = '0123456789ABCDEF'; for (var i = 0; i < n; i++) s += a[Math.floor(Math.random() * 16)]; return s; }
+
+    function calc() {
+      var amt = round2(parseFloat(amtEl.value) || 0);
+      var rate = RATES[band];
+      var net = round2(amt / (1 + rate));
+      return { amt: amt, net: net, vat: round2(amt - net), rate: rate };
+    }
+
+    window.demoRecalc = function () {
+      var s = calc();
+      document.getElementById('demo-net').textContent = 'KES ' + fmt(s.net);
+      document.getElementById('demo-vat').textContent = 'KES ' + fmt(s.vat);
+      document.getElementById('demo-gross').textContent = 'KES ' + fmt(s.amt);
+    };
+
+    window.demoBand = function (btn) {
+      band = btn.getAttribute('data-band');
+      document.querySelectorAll('.demo-band').forEach(function (b) {
+        var on = b === btn;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      demoRecalc();
+    };
+
+    window.demoSign = function () {
+      var btn = document.getElementById('demo-btn');
+      var box = document.getElementById('demo-receipt');
+      var s = calc();
+      var label = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Signing…';
+      box.classList.remove('empty', 'revealed'); box.classList.add('signing');
+      setTimeout(function () {
+        var now = new Date();
+        var d = pad(now.getDate()) + pad(now.getMonth() + 1) + now.getFullYear();
+        var t = pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+        var scu = 'KRACU' + pad(1 + Math.floor(Math.random() * 8)) + '000000' + hex(2);
+        var inv = 100 + Math.floor(Math.random() * 900);
+        var sig = hex(16);
+        var pct = (s.rate * 100).toFixed(0);
+        box.innerHTML =
+          '<div class="rc-sample">SAMPLE</div>' +
+          '<div class="rc-c"><div class="rc-nm">DEMO MERCHANT LTD</div>' +
+          '<div class="rc-mut">Nairobi · PIN A000123456B · Branch 00</div></div>' +
+          '<hr><div class="rc-c rc-lab">Tax Invoice · ' + d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4) + '</div><hr>' +
+          '<div class="rc-row"><span>Sale item</span><span>KES ' + fmt(s.amt) + ' <span class="rc-band">' + band + '</span></span></div>' +
+          '<hr><div class="rc-row rc-tot"><span>TOTAL</span><span>KES ' + fmt(s.amt) + '</span></div>' +
+          '<hr><div class="rc-lab rc-c">Net / VAT / Gross — Band ' + band + ' · ' + pct + '%</div>' +
+          '<div class="rc-row"><span>' + band + '</span><span>' + fmt(s.net) + ' / ' + fmt(s.vat) + ' / ' + fmt(s.amt) + '</span></div>' +
+          '<hr class="solid"><div class="rc-fisc">◆ eTIMS FISCAL RECEIPT ◆</div><hr class="solid">' +
+          '<dl class="rc-kv">' +
+            '<dt>SCU ID</dt><dd>' + scu + '</dd>' +
+            '<dt>CU Inv No</dt><dd>' + scu + '/' + inv + ' NS</dd>' +
+            '<dt>Rcpt Sign</dt><dd class="sig">' + sig + '</dd>' +
+            '<dt>Signed</dt><dd>' + d + ' ' + t + '</dd>' +
+          '</dl>' +
+          '<canvas class="rc-qr" width="242" height="242" aria-hidden="true"></canvas>' +
+          '<div class="rc-c rc-mut" style="font-size:10px;margin-top:2px">Powered by TaxID</div>';
+        drawQR(box.querySelector('.rc-qr'), d + '#' + t + '#' + scu + '#' + sig);
+        box.classList.remove('signing'); box.classList.add('revealed');
+        btn.disabled = false; btn.textContent = label;
+      }, 560);
+    };
+
+    function drawQR(cv, seed) {
+      var x = cv.getContext('2d'), N = 25, q = 2, T = N + q * 2, S = cv.width, m = S / T;
+      x.fillStyle = '#FCFBF7'; x.fillRect(0, 0, S, S);
+      var g = []; for (var i = 0; i < N; i++) g.push(new Array(N).fill(false));
+      function finder(r, c) { for (var i = 0; i < 7; i++) for (var j = 0; j < 7; j++) g[r + i][c + j] = (i === 0 || i === 6 || j === 0 || j === 6) || (i >= 2 && i <= 4 && j >= 2 && j <= 4); }
+      finder(0, 0); finder(0, N - 7); finder(N - 7, 0);
+      var h = 2166136261; for (var k = 0; k < seed.length; k++) { h ^= seed.charCodeAt(k); h = (h * 16777619) >>> 0; }
+      function rnd(u, v) { var w = (h ^ ((u + 1) * 73856093) ^ ((v + 1) * 19349663)) >>> 0; w = ((w ^ (w >>> 13)) * 0x5bd1e995) >>> 0; return ((w >>> 16) & 1) === 1; }
+      function reserved(r, c) { function F(a, b) { return r >= a - 1 && r <= a + 7 && c >= b - 1 && c <= b + 7; } return F(0, 0) || F(0, N - 7) || F(N - 7, 0); }
+      for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) if (!reserved(r, c)) g[r][c] = rnd(r, c);
+      x.fillStyle = '#141414';
+      for (var R = 0; R < N; R++) for (var C = 0; C < N; C++) if (g[R][C]) x.fillRect((C + q) * m, (R + q) * m, m + 0.6, m + 0.6);
+    }
+
+    demoRecalc();
+  })();
 </script>
 
 <!-- ════════════════════════════════════════
