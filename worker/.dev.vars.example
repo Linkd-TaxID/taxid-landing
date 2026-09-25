@@ -1,0 +1,8 @@
+# Copy to `.dev.vars` for local `wrangler dev`. Never commit `.dev.vars`.
+# SANDBOX_API_KEY: the sandbox SANDBOX_SDK_KEY (tenant-bound X-API-Key).
+# SUPPLIER_PIN:    the sandbox device's KRA PIN (kept out of source — it is
+#                  identifying data and this repo is public).
+SANDBOX_API_KEY=txd_sb_xxxxxxxxxxxxxxxx
+SUPPLIER_PIN=A000000000Z
+# Admit http://localhost origins (local `wrangler dev` only — never set in prod).
+ALLOW_LOCALHOST=1

@@ -1,0 +1,38 @@
+# taxid-demo-sign — Cloudflare Worker that signs one live KRA-sandbox receipt
+# for the public demo on taxid.co.ke. Deploy runbook: see README.md.
+
+name = "taxid-demo-sign"
+main = "src/index.js"
+compatibility_date = "2025-07-01"
+
+# Neither the sandbox X-API-Key nor the device PIN is stored here — both are
+# encrypted secrets, never committed (a KRA PIN is identifying data and this
+# repo is public):
+#   npx wrangler secret put SANDBOX_API_KEY   # paste the SANDBOX_SDK_KEY value
+#   npx wrangler secret put SUPPLIER_PIN      # paste the sandbox device's KRA PIN
+
+# Abuse guards — both required; the Worker returns 500 not_configured without
+# them rather than signing unthrottled.
+#
+# Per-IP burst limit. namespace_id is any integer string unique within the
+# Cloudflare account. Counters are per Cloudflare location, so treat this as a
+# burst brake, not an exact quota.
+[[ratelimits]]
+name = "IP_LIMITER"
+namespace_id = "7301"
+simple = { limit = 6, period = 60 }
+
+# Exact global daily cap (GLOBAL_PER_DAY in src/index.js).
+[[durable_objects.bindings]]
+name = "DAILY_CAP"
+class_name = "DailyCap"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["DailyCap"]
+
+# Optional: serve from a custom route instead of the workers.dev subdomain.
+# Requires taxid.co.ke to be on Cloudflare DNS. Example:
+# routes = [
+#   { pattern = "demo.taxid.co.ke/sign", custom_domain = true }
+# ]
