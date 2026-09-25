@@ -11,13 +11,25 @@ compatibility_date = "2025-07-01"
 #   npx wrangler secret put SANDBOX_API_KEY   # paste the SANDBOX_SDK_KEY value
 #   npx wrangler secret put SUPPLIER_PIN      # paste the sandbox device's KRA PIN
 
-# Rate limiter (optional but recommended). The Worker feature-detects the RL
-# binding: without it, signing still works but is unthrottled. To enable:
-#   npx wrangler kv namespace create RL
-# then paste the returned id below and uncomment:
-# [[kv_namespaces]]
-# binding = "RL"
-# id = "<paste-kv-namespace-id-here>"
+# Abuse guards — both required; the Worker returns 500 not_configured without
+# them rather than signing unthrottled.
+#
+# Per-IP burst limit. namespace_id is any integer string unique within the
+# Cloudflare account. Counters are per Cloudflare location, so treat this as a
+# burst brake, not an exact quota.
+[[ratelimits]]
+name = "IP_LIMITER"
+namespace_id = "7301"
+simple = { limit = 6, period = 60 }
+
+# Exact global daily cap (GLOBAL_PER_DAY in src/index.js).
+[[durable_objects.bindings]]
+name = "DAILY_CAP"
+class_name = "DailyCap"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["DailyCap"]
 
 # Optional: serve from a custom route instead of the workers.dev subdomain.
 # Requires taxid.co.ke to be on Cloudflare DNS. Example:

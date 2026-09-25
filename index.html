@@ -2187,12 +2187,23 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     // to a clearly-labelled client-side sample, so the page never breaks.
     var DEMO_SIGN_URL = "";
     var band = 'B';
+    // One idempotency id per receipt attempt, reused until it comes back signed:
+    // a retry after a timeout or a queued result replays the same sandbox sale
+    // instead of signing a new one. Changing the amount or band starts a new one.
+    var attempt = null;
     var amtEl = document.getElementById('demo-amt');
     if (!amtEl) return;
 
     function round2(x) { return Math.round((x + Number.EPSILON) * 100) / 100; }
     function fmt(x) { return x.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function uuid() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      var b = crypto.getRandomValues(new Uint8Array(16)), h = [];
+      b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+      for (var i = 0; i < 16; i++) h.push((b[i] + 256).toString(16).slice(1));
+      return h.slice(0, 4).join('') + '-' + h.slice(4, 6).join('') + '-' + h.slice(6, 8).join('') + '-' + h.slice(8, 10).join('') + '-' + h.slice(10).join('');
+    }
     function hex(n) { var s = '', a = '0123456789ABCDEF'; for (var i = 0; i < n; i++) s += a[Math.floor(Math.random() * 16)]; return s; }
 
     function calc() {
@@ -2301,30 +2312,39 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
 
       function finish() { btn.disabled = false; btn.textContent = label; }
       function showSample() { renderReceipt(box, sampleReceipt(s), false); finish(); }
-      function showError(msg) {
+      function showError(msg, noteText) {
         box.classList.remove('signing'); box.classList.add('empty', 'revealed');
         box.textContent = msg;
-        if (note) note.textContent = SAMPLE_NOTE;
+        if (note) note.textContent = noteText || SAMPLE_NOTE;
         finish();
       }
 
       // No live endpoint configured → sample, after a short beat for feel.
       if (!DEMO_SIGN_URL) { setTimeout(showSample, 560); return; }
 
+      if (!attempt || attempt.amt !== s.amt || attempt.band !== band) {
+        attempt = { id: uuid(), amt: s.amt, band: band };
+      }
+
       var ctl = new AbortController();
       var to = setTimeout(function () { ctl.abort(); }, 25000);
       fetch(DEMO_SIGN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: s.amt, band: band }),
+        body: JSON.stringify({ amount: s.amt, band: band, attemptId: attempt.id }),
         signal: ctl.signal,
       }).then(function (resp) {
         return resp.json().then(function (data) { return { status: resp.status, data: data }; });
       }).then(function (res) {
         clearTimeout(to);
         if (res.data && res.data.ok) {
+          attempt = null;
           renderReceipt(box, liveReceipt(res.data), true);
           finish();
+        } else if (res.data && res.data.queued) {
+          // Accepted but not signed yet — a real sandbox sale exists, so never
+          // dress this up as a sample.
+          showError(res.data.message, 'Sandbox sale #' + res.data.purchaseId + ' · status ' + res.data.status + '.');
         } else if (res.status === 429) {
           showError((res.data && res.data.message) || 'The live demo is busy right now — give it a minute, then try again.');
         } else {
