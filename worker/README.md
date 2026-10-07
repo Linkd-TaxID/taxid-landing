@@ -1,77 +1,42 @@
-# taxid-demo-sign — live-receipt Worker
+# Landing receipt relay
 
-Signs **one live KRA-sandbox receipt** for the "Sign a test receipt" demo on
-[taxid.co.ke](https://taxid.co.ke).
+Optional Cloudflare Worker for the landing receipt sample. The landing currently
+leaves `DEMO_SIGN_URL` empty and renders a labelled local sample. This relay is
+not the invited developer workspace and is not enabled by this documentation.
 
-The landing page is static (GitHub Pages) and cannot safely hold a credential.
-This Worker sits between the page and the TaxID middleware and holds the sandbox
-`X-API-Key` as an encrypted secret, so the key never reaches the browser.
+The Worker forwards `POST /v2/etims/sale` to `https://api.taxid.co.ke`, holding
+`SANDBOX_API_KEY` and `SUPPLIER_PIN` as server-side secret bindings. The browser
+sends `{ amount, band, attemptId }`; the Worker computes the amount/VAT split.
+The key fixes the taxpayer branch. Never place it in landing JavaScript.
 
-## What it does
+## Configuration
 
-```
-browser ──{ amount, band }──▶ Worker ──POST /v2/etims/sale (X-API-Key)──▶ api.taxid.co.ke ──▶ KRA sandbox VSCU
-        ◀── real signed fiscal block ◀────────────────────────────────────────────────────────────────
-```
+| Binding | Purpose |
+|---|---|
+| `SANDBOX_API_KEY` | Branch application key, stored with Wrangler secrets |
+| `SUPPLIER_PIN` | Assigned seller PIN, stored with Wrangler secrets |
+| `IP_LIMITER` | Required per-location burst limiter: 6 requests/minute/IP |
+| `DAILY_CAP` | Required Durable Object: global cap of 500 attempts/UTC day |
+| `ALLOW_LOCALHOST=1` | Development-only permission for localhost origins |
 
-- The browser sends **only** `{ amount, band }` — never a key, never tax figures.
-- The Worker recomputes the VAT split itself (same zero-math as the SDK), so a
-  crafted client cannot forge an inconsistent net/VAT/gross.
-- `supplierPin`, payment type and invoice date are fixed server-side.
-- Guards: amount capped at 1,000,000; band whitelist (A–E); requests from any
-  origin outside the allow-list are refused with 403; per-IP burst limit
-  (`IP_LIMITER`, 6/min) and an exact global daily cap (`DAILY_CAP` Durable
-  Object, 500/day). Both limiters are declared in `wrangler.toml` and are
-  required — without them the Worker returns `not_configured` instead of
-  signing unthrottled.
+`wrangler.toml` defines both limiters. Missing bindings return `not_configured`.
+Amounts are limited to KES 1–1,000,000; supported bands are A–E. Fixed rate
+values are sample defaults and require review against current classifications.
+CORS restricts browser origins but does not authenticate arbitrary HTTP clients.
 
-## Deploy
+Local commands: `npm install`, then `npx wrangler dev`. Secret values belong in
+ignored `.dev.vars`; production bindings use `npx wrangler secret put`.
+Deployment uses `npx wrangler deploy` only after the release boundary below is
+resolved. Rotation replaces the Worker secret and revokes the old branch key.
 
-```bash
-cd worker
-npm install
+## Release boundary
 
-# 1. Authenticate (opens a browser once)
-npx wrangler login
+This retained relay labels successful output `sandbox: true` without verifying
+the upstream environment. It also lacks original-reference lookup and advises
+retry after a transport timeout. Those behaviours must be corrected before
+reactivating it: no fiscal request may be repeated blindly after uncertainty.
+Do not treat its label as evidence of KRA sandbox submission or central acceptance.
 
-# 2. Store the sandbox secrets (paste the value when prompted for each)
-npx wrangler secret put SANDBOX_API_KEY   # the SANDBOX_SDK_KEY value
-npx wrangler secret put SUPPLIER_PIN      # the sandbox device's KRA PIN (kept out of source)
-
-# 3. Ship it (the rate limiter and daily-cap Durable Object deploy with it)
-npx wrangler deploy
-```
-
-`wrangler deploy` prints the public URL, e.g.
-`https://taxid-demo-sign.<your-subdomain>.workers.dev`.
-
-## Wire the page to it
-
-In `../index.html`, set the demo endpoint constant to the deployed URL:
-
-```js
-var DEMO_SIGN_URL = "https://taxid-demo-sign.<your-subdomain>.workers.dev";
-```
-
-While `DEMO_SIGN_URL` is empty (or the Worker is unreachable) the demo falls
-back to a clearly-labelled client-side **sample**. Once it is set and reachable,
-the demo signs a **real sandbox receipt** and shows the genuine SCU ID, CU
-invoice number, receipt signature and timestamp.
-
-## Local development
-
-```bash
-cp .dev.vars.example .dev.vars     # then fill in the real SANDBOX_SDK_KEY + SUPPLIER_PIN
-npx wrangler dev                   # serves on http://localhost:8787
-curl -s http://localhost:8787 -X POST -H 'Content-Type: application/json' \
-  -H 'Origin: http://localhost:8000' \
-  -d '{"amount":580,"band":"B"}' | python3 -m json.tool
-```
-
-`.dev.vars` is git-ignored — never commit it.
-
-## Rotating / revoking the demo key
-
-The key is sandbox-only and tenant-bound. To rotate: mint a new sandbox key,
-`npx wrangler secret put SANDBOX_API_KEY` with the new value, then revoke the old
-one on the middleware. No page redeploy is needed.
+Use the invited simulator workspace for the maintained submit, lookup and recovery
+journey. `SIGNED` means a persisted control-unit receipt; central KRA acceptance
+requires separate evidence. Current TaxID developer access issues simulated output.
