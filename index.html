@@ -2154,11 +2154,11 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
         headers: { Accept: 'application/json' },
       });
 
-      if (res.ok) {
-        showSuccess();
-      } else {
+      const data = await res.json();
+      if (!res.ok || (data?.success !== true && data?.success !== 'true')) {
         throw new Error('Submission failed');
       }
+      showSuccess();
     } catch (err) {
       console.error('Form error:', err);
       btn.disabled = false;
