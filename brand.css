@@ -1,0 +1,60 @@
+/* Variable fonts, latin subset, self-hosted */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('fonts/inter-var.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('fonts/jetbrains-mono-var.woff2') format('woff2');
+}
+
+/* ─────────────────────────────────────────
+   DESIGN TOKENS
+───────────────────────────────────────── */
+:root {
+  --bg:           #07090F;
+  --surface:      #0C1016;
+  --surface-2:    #101520;
+  --border:       #1B2335;
+  --border-dim:   #111825;
+  --text:         #E2E8F2;
+  --text-2:       #9AA6BA;
+  --text-3:       #8390A5;
+  --accent:       #00C897;
+  --accent-dim:   rgba(0, 200, 151, 0.08);
+  --accent-mid:   rgba(0, 200, 151, 0.18);
+  --accent-glow:  rgba(0, 200, 151, 0.28);
+  --warn:         #F0A020;
+  --danger:       #E05252;
+
+  --font:         'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono:         'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Type scale — single source of truth. No ad-hoc or half-pixel sizes. */
+  --fs-xs:    12px;   /* eyebrows, fine print, mono labels, tags */
+  --fs-sm:    14px;   /* secondary body, captions, code */
+  --fs-md:    14px;   /* buttons, dense UI text */
+  --fs-base:  15px;   /* primary body, large buttons */
+  --fs-prose: 15px;
+  --fs-lg:    17px;   /* lead, h3, logo */
+  --fs-xl:    22px;
+  --fs-2xl:   34px;
+  /* display + h2 keep their clamp() definitions below */
+
+  --r-sm:   6px;
+  --r:      10px;
+  --r-lg:   16px;
+  --r-xl:   22px;
+
+  --shadow:    0 4px 24px rgba(0,0,0,0.45);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.55);
+
+  --max-w:    1080px;
+  --gap:      112px;
+}
