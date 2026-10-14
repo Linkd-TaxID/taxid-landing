@@ -46,6 +46,19 @@ faq:
 
 Each question and answer must also appear word for word in the post body.
 
+## Comments
+
+Posts show a comment thread powered by [giscus](https://giscus.app), stored in this repo's GitHub Discussions. Readers sign in with GitHub to comment, and replies and moderation happen in the Discussions tab.
+
+One-time setup (needs a repo admin and an org owner):
+
+1. Settings → General → Features → enable **Discussions**.
+2. Install the [giscus app](https://github.com/apps/giscus) on this repo only.
+3. In Discussions, create a category named **Blog comments** with the **Announcements** format, so only giscus and maintainers can start threads.
+4. On [giscus.app](https://giscus.app), enter `Linkd-TaxID/taxid-landing`, choose that category, and copy `data-repo-id` and `data-category-id` into `giscus.repo_id` and `giscus.category_id` in `_config.yml`.
+
+Until those IDs are set, no comment section is shown. To turn comments off for one post, add `comments: false` to its front matter. The comment box uses `assets/giscus-theme.css`, a recoloured copy of giscus's dark theme in our brand colours.
+
 ## Previewing locally
 
 ```bash

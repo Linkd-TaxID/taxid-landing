@@ -1,0 +1,108 @@
+/* TaxID comments theme for giscus.
+ * Based on giscus's dark theme, recoloured with brand.css tokens:
+ * surfaces #07090F/#0C1016/#101520, borders #1B2335, text #E2E8F2/#9AA6BA,
+ * accent #00C897, and the landing page's code-highlighting palette.
+ * Served from taxid.co.ke and loaded by giscus via data-theme.
+ */
+/*! MIT License
+ * Copyright (c) 2018 GitHub Inc.
+ * https://github.com/primer/primitives/blob/main/LICENSE
+ */
+
+main {
+  color-scheme: dark;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-prettylights-syntax-comment: #8390A5;
+  --color-prettylights-syntax-constant: #C2A98E;
+  --color-prettylights-syntax-entity: #00C897;
+  --color-prettylights-syntax-storage-modifier-import: #CBD3E1;
+  --color-prettylights-syntax-entity-tag: #6FD3C0;
+  --color-prettylights-syntax-keyword: #8F9AB8;
+  --color-prettylights-syntax-string: #A8B89C;
+  --color-prettylights-syntax-variable: #CBD3E1;
+  --color-prettylights-syntax-brackethighlighter-unmatched: #f85149;
+  --color-prettylights-syntax-invalid-illegal-text: #f0f6fc;
+  --color-prettylights-syntax-invalid-illegal-bg: #8e1519;
+  --color-prettylights-syntax-carriage-return-text: #f0f6fc;
+  --color-prettylights-syntax-carriage-return-bg: #b62324;
+  --color-prettylights-syntax-string-regexp: #A8B89C;
+  --color-prettylights-syntax-markup-list: #F0A020;
+  --color-prettylights-syntax-markup-heading: #00C897;
+  --color-prettylights-syntax-markup-italic: #c9d1d9;
+  --color-prettylights-syntax-markup-bold: #c9d1d9;
+  --color-prettylights-syntax-markup-deleted-text: #ffdcd7;
+  --color-prettylights-syntax-markup-deleted-bg: #67060c;
+  --color-prettylights-syntax-markup-inserted-text: #aff5b4;
+  --color-prettylights-syntax-markup-inserted-bg: #033a16;
+  --color-prettylights-syntax-markup-changed-text: #ffdfb6;
+  --color-prettylights-syntax-markup-changed-bg: #5a1e02;
+  --color-prettylights-syntax-markup-ignored-text: #c9d1d9;
+  --color-prettylights-syntax-markup-ignored-bg: #1158c7;
+  --color-prettylights-syntax-meta-diff-range: #6FD3C0;
+  --color-prettylights-syntax-brackethighlighter-angle: #8b949e;
+  --color-prettylights-syntax-sublimelinter-gutter-mark: #484f58;
+  --color-prettylights-syntax-constant-other-reference-link: #A8B89C;
+  --color-btn-text: #E2E8F2;
+  --color-btn-bg: #101520;
+  --color-btn-border: #1B2335;
+  --color-btn-shadow: 0 0 transparent;
+  --color-btn-inset-shadow: 0 0 transparent;
+  --color-btn-hover-bg: #1B2335;
+  --color-btn-hover-border: #8390A5;
+  --color-btn-active-bg: #1B2335;
+  --color-btn-active-border: #8390A5;
+  --color-btn-selected-bg: #0C1016;
+  --color-btn-primary-text: #000;
+  --color-btn-primary-bg: #00C897;
+  --color-btn-primary-border: #00C897;
+  --color-btn-primary-shadow: 0 0 transparent;
+  --color-btn-primary-inset-shadow: 0 0 transparent;
+  --color-btn-primary-hover-bg: #00DEAD;
+  --color-btn-primary-hover-border: #00DEAD;
+  --color-btn-primary-selected-bg: #00C897;
+  --color-btn-primary-selected-shadow: 0 0 transparent;
+  --color-btn-primary-disabled-text: rgb(0 0 0 / 50%);
+  --color-btn-primary-disabled-bg: rgb(0 200 151 / 45%);
+  --color-btn-primary-disabled-border: rgb(0 200 151 / 0%);
+  --color-action-list-item-default-hover-bg: #101520;
+  --color-segmented-control-bg: #101520;
+  --color-segmented-control-button-bg: #07090F;
+  --color-segmented-control-button-selected-border: #1B2335;
+  --color-fg-default: #E2E8F2;
+  --color-fg-muted: #9AA6BA;
+  --color-fg-subtle: #8390A5;
+  --color-canvas-default: #0C1016;
+  --color-canvas-overlay: #101520;
+  --color-canvas-inset: #07090F;
+  --color-canvas-subtle: #101520;
+  --color-border-default: #1B2335;
+  --color-border-muted: #111825;
+  --color-neutral-muted: rgb(131 144 165 / 25%);
+  --color-accent-fg: #00C897;
+  --color-accent-emphasis: #00C897;
+  --color-accent-muted: rgb(0 200 151 / 28%);
+  --color-accent-subtle: rgb(0 200 151 / 8%);
+  --color-success-fg: #00C897;
+  --color-attention-fg: #F0A020;
+  --color-attention-muted: rgb(240 160 32 / 40%);
+  --color-attention-subtle: rgb(240 160 32 / 12%);
+  --color-danger-fg: #E05252;
+  --color-danger-muted: rgb(224 82 82 / 40%);
+  --color-danger-subtle: rgb(224 82 82 / 10%);
+  --color-primer-shadow-inset: 0 0 transparent;
+  --color-scale-gray-7: #1B2335;
+  --color-scale-blue-8: rgb(0 200 151 / 18%);
+
+  /*! Extensions from @primer/css/alerts/flash.scss */
+  --color-social-reaction-bg-hover: var(--color-scale-gray-7);
+  --color-social-reaction-bg-reacted-hover: var(--color-scale-blue-8);
+}
+
+main .pagination-loader-container {
+  background-image: url("https://github.com/images/modules/pulls/progressive-disclosure-line-dark.svg");
+}
+
+main .gsc-loading-image {
+  background-image: url("https://github.githubassets.com/images/mona-loading-dark.gif");
+}
+

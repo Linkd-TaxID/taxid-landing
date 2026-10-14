@@ -547,6 +547,31 @@ main { min-height: 60vh; overflow-x: clip; }
 
 .post-cta p { font-size: var(--fs-base); color: var(--text-2); margin-top: 6px; }
 
+/* ─────────────────────────────────────────
+   BLOG — comments (giscus)
+───────────────────────────────────────── */
+.post-comments {
+  max-width: 720px;
+  margin-top: 72px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border-dim);
+}
+
+.post-comments-title {
+  font-size: var(--fs-xl);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.post-comments-note {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  margin: 8px 0 24px;
+}
+
+.post-comments .giscus,
+.post-comments .giscus-frame { width: 100%; color-scheme: dark; }
+
 @media (max-width: 640px) {
   .blog-head, .post-head { padding-top: 110px; }
   .post-card { padding: 22px 20px; }
