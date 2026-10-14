@@ -2,7 +2,7 @@
 title: "What to do when an eTIMS submission times out"
 description: "A timeout doesn't tell you whether the invoice was signed. Look up the original reference before you submit again."
 category: Recovery
-author: TaxID Engineering
+author: TaxID
 # last_modified_at: 2026-11-01   # uncomment when you revise this post
 faq:
   - q: "What happens after a timeout or outage?"
