@@ -1,0 +1,68 @@
+# Jekyll config for taxid.co.ke (GitHub Pages).
+# The landing page (index.html) and og.html have no front matter, so Jekyll
+# copies them through untouched. Only the blog uses layouts.
+
+title: TaxID
+description: >-
+  Engineering notes on eTIMS integration, receipt lookup and reconciliation
+  for Kenyan invoicing, accounting and POS software.
+url: https://taxid.co.ke
+baseurl: ""
+lang: en_KE
+locale: en_KE
+
+logo: /apple-touch-icon.png
+social:
+  name: TaxID
+  links: []
+
+# Default author shown on posts. Override per post with `author:`.
+author:
+  name: TaxID Engineering
+
+permalink: /blog/:title/
+timezone: Africa/Nairobi
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+feed:
+  path: blog/feed.xml
+
+# Comments on blog posts, stored in GitHub Discussions (giscus.app).
+# Repo and category IDs are public — not secrets.
+# To disable comments on a single post, add `comments: false` to its front matter.
+giscus:
+  repo: Linkd-TaxID/taxid-landing
+  repo_id: "R_kgDOSkPrwQ"
+  category: Blog comments
+  category_id: "DIC_kwDOSkPrwc4DIbNX"
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+  # og.html is the source for og-image.png, not a page for search engines.
+  - scope:
+      path: og.html
+    values:
+      sitemap: false
+
+# Never publish these. `worker/` is the Cloudflare Worker, deployed separately.
+exclude:
+  - worker/
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - node_modules/
+  - .jekyll-cache/
