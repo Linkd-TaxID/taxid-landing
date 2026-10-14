@@ -1,0 +1,23 @@
+---
+layout: null
+sitemap: false
+---
+# Search engines and AI answer engines are welcome to read the site.
+User-agent: *
+Allow: /
+
+# Named explicitly so the intent is clear if a CDN or WAF adds bot rules.
+User-agent: Googlebot
+User-agent: Bingbot
+User-agent: Google-Extended
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: {{ site.url }}/sitemap.xml

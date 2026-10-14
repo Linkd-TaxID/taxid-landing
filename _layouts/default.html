@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  {%- comment -%} Title, description, canonical, Open Graph, Twitter and JSON-LD {%- endcomment %}
+  {% seo %}
+  {%- unless page.image %}
+  <meta property="og:image" content="{{ site.url }}/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="{{ site.url }}/og-image.png" />
+  {%- endunless %}
+  {% feed_meta %}
+  {% include faq-schema.html %}
+
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+  <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/jetbrains-mono-var.woff2" as="font" type="font/woff2" crossorigin />
+
+  <link rel="stylesheet" href="/brand.css" />
+  <link rel="stylesheet" href="/assets/blog.css" />
+</head>
+<body>
+
+{% include nav.html %}
+
+<main id="main">
+{{ content }}
+</main>
+
+{% include footer.html %}
+
+<script>
+  /* Same nav behaviour as the landing page */
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('solid', window.scrollY > 16);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  function closeMenu() {
+    nav.classList.remove('menu-open');
+    document.getElementById('nav-burger').setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleMenu() {
+    const open = nav.classList.toggle('menu-open');
+    document.getElementById('nav-burger').setAttribute('aria-expanded', String(open));
+  }
+
+  document.querySelectorAll('#nav-links a').forEach(link => link.addEventListener('click', closeMenu));
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && nav.classList.contains('menu-open')) {
+      closeMenu();
+      document.getElementById('nav-burger').focus();
+    }
+  });
+</script>
+</body>
+</html>
