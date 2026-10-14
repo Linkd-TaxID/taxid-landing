@@ -37,14 +37,13 @@ feed:
   path: blog/feed.xml
 
 # Comments on blog posts, stored in GitHub Discussions (giscus.app).
-# Comments stay hidden until repo_id and category_id are filled in.
-# Get both from https://giscus.app after Discussions and the giscus app
-# are enabled on this repo. They are public IDs, not secrets.
+# Repo and category IDs are public — not secrets.
+# To disable comments on a single post, add `comments: false` to its front matter.
 giscus:
   repo: Linkd-TaxID/taxid-landing
-  repo_id: ""
+  repo_id: "R_kgDOSkPrwQ"
   category: Blog comments
-  category_id: ""
+  category_id: "DIC_kwDOSkPrwc4DIbNX"
 
 defaults:
   - scope:
