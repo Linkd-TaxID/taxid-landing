@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT_FILES = {
     "index.html", "og.html", "og-image.png", "brand.css", "CNAME", "robots.txt",
     "apple-touch-icon.png", "favicon.ico", "favicon-32x32.png", "sitemap.xml",
+    "connected-demo.js",
 }
 FONT_FILES = {
     "inter-var.woff2", "jetbrains-mono-var.woff2", "OFL-Inter.txt",
@@ -17,7 +18,7 @@ REQUIRED_FILES = {
     "index.html", "blog/index.html", "brand.css", "assets/blog.css", "CNAME",
     "fonts/inter-var.woff2", "fonts/jetbrains-mono-var.woff2",
     "fonts/OFL-Inter.txt", "fonts/OFL-JetBrainsMono.txt", "sitemap.xml",
-    "blog/feed.xml",
+    "blog/feed.xml", "connected-demo.js",
 }
 
 

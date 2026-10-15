@@ -1360,6 +1360,12 @@
     .lead, .feat p, .step p, .wl-note, .trust-item { overflow-wrap: anywhere; }
     .hero-actions .btn { justify-content: center; }
     .demo-amount input:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .connected-demo [hidden] { display:none !important; }
+    .connected-demo select { width:100%; padding:12px; margin:8px 0 20px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); border-radius:var(--r-sm); font:inherit; }
+    .connected-demo select:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+    .connected-demo p { margin:12px 0; }
+    #connected-results { overflow-wrap:anywhere; }
+    #connected-results .demo-split-row { flex-wrap:wrap; gap:8px; }
   </style>
 </head>
 <body>
@@ -1541,7 +1547,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
         </div>
         <h3>Recovery and reconciliation</h3>
-        <p>Queue eligible work. Keep uncertain signing outcomes available for investigation before replay.</p>
+        <p>Resume an original invoice after evidenced registration recovery. Itemised returns retain original prices and taxes; uncertain corrections and stock operations stay available for investigation. These flows are tested in the simulator; production registration, retail corrections and stock remain gated.</p>
       </div>
       <div class="feat">
         <div class="feat-ico">
@@ -1554,8 +1560,9 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
         <div class="feat-ico">
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
-        <h3>Control-unit integration</h3>
+        <h3>Accounting and device access</h3>
         <p>Keep branch device configuration and control-unit credentials behind your application’s API integration.</p>
+        <p>Sandbox withholding accounting keeps estimates, recorded deductions and supplied remittance evidence distinct. Operator approval and refund review preserve the liability; production withholding, automatic remittance and dedicated reverse invoicing remain gated.</p>
       </div>
     </div>
   </div>
@@ -1612,7 +1619,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
         <div class="arch-arr-lbl">Branch routing</div>
       </div>
       <div class="arch-box">
-        <div class="ab-name">VSCU control unit</div>
+        <div class="ab-name">VSCU / OSCU</div>
         <div class="ab-sub">Device state &amp; signing</div>
       </div>
       <div class="arch-arr">
@@ -1646,11 +1653,41 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
 <section id="try-it" class="ruled">
   <div class="wrap">
     <div class="section-head">
-      <span class="eyebrow">Interactive sample</span>
-      <h2>See the receipt format.</h2>
-      <p class="lead">Change the amount to see a sample receipt. No fiscal invoice is issued or submitted to KRA.</p>
+      <span class="eyebrow">Interactive examples</span>
+      <h2>Try two fiscal workflows.</h2>
+      <p class="lead">Follow a creator sale or retail basket through the simulator. No fiscal invoice is issued or submitted to KRA.</p>
     </div>
 
+    <div class="connected-demo" id="connected-demo">
+      <p class="demo-note">Connected simulator · synthetic data only. No KRA submission, payment or remittance. Five operations per public session; access lasts 30 minutes.</p>
+      <div class="demo-grid">
+        <div>
+          <label class="demo-label" for="connected-kind">Example</label>
+          <select id="connected-kind"><option value="creator">Creator platform</option><option value="retail">Retail basket</option></select>
+          <label class="demo-label" for="connected-scenario">Fiscal outcome to exercise</label>
+          <select id="connected-scenario"><option value="SUCCESS">Signed simulated receipt</option><option value="HELD_BRANCH">Pending behind an uncertain invoice</option><option value="AMBIGUOUS_TIMEOUT_AFTER_SIGN">Uncertain after signing</option></select>
+          <p class="demo-note" id="connected-pending-note" hidden>The pending exercise first creates an uncertain synthetic predecessor. It uses two of the five invoice attempts.</p>
+          <div id="creator-example">
+            <p>Creator sale: KES 1,160 including sample VAT. Separately invoice a platform fee of KES 134.56 (KES 116 + 18.56 sample VAT). These demonstrate two invoice obligations. This public example uses one synthetic branch; separate creator and platform taxpayer authorisation requires invited integration testing. Buyer-issued reverse invoicing is unavailable.</p>
+            <label class="demo-label" for="connected-residency">Illustrative withholding category</label>
+            <select id="connected-residency"><option value="resident">Resident digital content · 5%</option><option value="nonresident">Nonresident without PE · 20%</option></select>
+            <p class="demo-note">Gross-receipts basis; fixture fee is 10% before fee VAT. Category, payer responsibility, residency, exemptions and fee treatment require transaction-specific assessment. Gifts remain unresolved: no gift invoice, withholding or payout is calculated.</p>
+          </div>
+          <div id="retail-example" hidden><p>Basket: two synthetic notebooks at KES 116 each, and one synthetic tote at KES 58. Sample standard VAT is included. Return one notebook using its original line, price and tax.</p><p class="demo-note">Fixture classifications are for the simulator. Production item registration and partial returns remain gated.</p></div>
+          <button type="button" class="btn btn-primary demo-sign" id="connected-run">Run connected example</button>
+          <button type="button" class="btn btn-ghost demo-sign" id="connected-lookup" disabled>Look up original reference</button>
+          <button type="button" class="btn btn-ghost demo-sign" id="connected-duplicate" disabled>Recover duplicate</button>
+          <button type="button" class="btn btn-ghost demo-sign" id="connected-return" hidden disabled>Return one notebook</button>
+          <button type="button" class="btn btn-ghost demo-sign" id="connected-fee" disabled>Issue separate fee invoice</button>
+        </div>
+        <div>
+          <p id="connected-message" role="status" aria-live="polite">Ready to connect. If the bounded simulator is unavailable, no sample will be substituted.</p>
+          <div id="connected-results" class="demo-split" aria-live="polite"></div>
+          <p class="demo-note">SIGNED describes simulator signing, not central KRA acceptance. Pending and uncertain results retain their original reference; investigate without sending a replacement. Financial figures are estimates, not deductions, verified receipts of money or paid payouts.</p>
+        </div>
+      </div>
+    </div>
+    <details style="margin-top:32px"><summary>Inspect the local receipt-format illustration</summary>
     <div class="demo-grid">
       <div>
         <div class="demo-field">
@@ -1685,6 +1722,7 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
         <p class="demo-note" id="demo-note">Illustrative calculation and sample receipt; no request is submitted to KRA. Confirm applicable tax classification separately.</p>
       </div>
     </div>
+    </details>
   </div>
 </section>
 
@@ -2216,5 +2254,6 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
   })();
 </script>
 
+<script src="connected-demo.js" defer></script>
 </body>
 </html>
