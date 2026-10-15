@@ -26,6 +26,25 @@ Source for [taxid.co.ke](https://taxid.co.ke), served by GitHub Pages.
 
 Posts dated in the future are not published until that date.
 
+## Publication checks
+
+The Pages workflow builds every pull request and checks the resulting `_site`
+inventory and content before publishing from `main`. It also compiles the
+Worker with `wrangler deploy --dry-run`; the Worker is deployed separately.
+Pages must use GitHub Actions as its publishing source, with the `github-pages`
+environment limited to `main`.
+
+After a local build, run:
+
+```bash
+python3 -m unittest discover -s tests -p test_site.py
+python3 scripts/check_site.py _site
+python3 scripts/check_repository.py --artifact-dir _site
+```
+
+See [REPOSITORY_POLICY.md](REPOSITORY_POLICY.md) for source and publication
+boundaries and [fonts/README.md](fonts/README.md) for font notices/provenance.
+
 ### Writing for search and AI answers
 
 - Open with the answer in two or three sentences, then explain.

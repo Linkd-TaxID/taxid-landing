@@ -1,0 +1,87 @@
+name: Pages
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hygiene:
+    uses: ./.github/workflows/hygiene.yml
+
+  build:
+    name: Build and verify site
+    needs: hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check repository inventory
+        run: python3 scripts/check_repository.py --ref "$GITHUB_SHA"
+      - name: Test publication policy
+        run: python3 -m unittest discover -s tests -p 'test_site.py'
+      - name: Build Jekyll site
+        env:
+          INPUT_TOKEN: ${{ github.token }}
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE,target=/github/workspace" \
+            -e GITHUB_WORKSPACE=/github/workspace \
+            -e GITHUB_REPOSITORY -e GITHUB_API_URL -e INPUT_TOKEN \
+            -e INPUT_SOURCE=./ -e INPUT_DESTINATION=./_site \
+            -e INPUT_FUTURE=false -e INPUT_VERBOSE=false \
+            -e INPUT_BUILD_REVISION="$GITHUB_SHA" \
+            ghcr.io/actions/jekyll-build-pages@sha256:6791ebfd912185ed59bfb5fb102664fa872496b79f87ff8b9cfba292a7345041
+      - name: Verify publication output
+        run: |
+          python3 scripts/check_site.py _site
+          python3 scripts/check_repository.py --artifact-dir _site
+      - name: Upload verified site
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: _site
+
+  worker:
+    name: Validate Worker bundle
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+      - run: npm ci
+      - name: Compile without deploying or using secrets
+        run: npx wrangler deploy --dry-run --outdir "$RUNNER_TEMP/worker-bundle"
+
+  deploy:
+    name: Deploy verified site
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [build, worker]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
