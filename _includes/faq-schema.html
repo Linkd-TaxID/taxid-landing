@@ -1,0 +1,27 @@
+{%- comment -%}
+  FAQPage structured data, built from a post's `faq:` front matter:
+
+    faq:
+      - q: "Does SIGNED mean KRA has accepted the invoice?"
+        a: "No. SIGNED records the control-unit signing outcome..."
+
+  Keep each answer identical to what the post body says. Search engines
+  penalise schema that doesn't match visible content.
+{%- endcomment -%}
+{%- if page.faq -%}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {%- for item in page.faq %}
+    {
+      "@type": "Question",
+      "name": {{ item.q | jsonify }},
+      "acceptedAnswer": { "@type": "Answer", "text": {{ item.a | jsonify }} }
+    }{% unless forloop.last %},{% endunless %}
+    {%- endfor %}
+  ]
+}
+</script>
+{%- endif -%}

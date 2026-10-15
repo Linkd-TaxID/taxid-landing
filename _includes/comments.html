@@ -1,0 +1,31 @@
+{%- comment -%}
+  Comments via giscus (GitHub Discussions). Renders only when both IDs are
+  set in _config.yml, so the blog works unchanged until setup is finished.
+  Turn off for a single post with `comments: false` in its front matter.
+{%- endcomment -%}
+{%- assign g = site.giscus -%}
+{%- if g.repo_id and g.repo_id != "" and g.category_id and g.category_id != "" and page.comments != false -%}
+<section class="post-comments" aria-labelledby="comments-title">
+  <span class="eyebrow">Discussion</span>
+  <h2 id="comments-title" class="post-comments-title">Questions about this post?</h2>
+  <p class="post-comments-note">Sign in with GitHub to comment. The TaxID engineers read and reply here.</p>
+  <div class="giscus"></div>
+  <script src="https://giscus.app/client.js"
+          data-repo="{{ g.repo }}"
+          data-repo-id="{{ g.repo_id }}"
+          data-category="{{ g.category }}"
+          data-category-id="{{ g.category_id }}"
+          data-mapping="pathname"
+          data-strict="1"
+          data-reactions-enabled="1"
+          data-emit-metadata="0"
+          data-input-position="top"
+          data-theme="{{ '/assets/giscus-theme.css' | absolute_url }}"
+          data-lang="en"
+          data-loading="lazy"
+          crossorigin="anonymous"
+          async>
+  </script>
+  <noscript><p class="post-comments-note">Comments need JavaScript. You can also <a href="https://github.com/{{ g.repo }}/discussions">join the discussion on GitHub</a>.</p></noscript>
+</section>
+{%- endif -%}

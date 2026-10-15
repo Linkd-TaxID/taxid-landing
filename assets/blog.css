@@ -1,0 +1,580 @@
+/* ─────────────────────────────────────────
+   TaxID blog styles
+   Shared section: copied verbatim from index.html (base, type,
+   buttons, nav, footer, mobile nav) so the blog matches the landing
+   page exactly. If you change those rules in index.html, mirror them here.
+   Tokens (colours, type scale, radii) come from brand.css.
+───────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: anywhere;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ─────────────────────────────────────────
+   ACCESSIBILITY
+───────────────────────────────────────── */
+/* Visible keyboard focus on every interactive element */
+a:focus-visible,
+.btn:focus-visible,
+.nav-link:focus-visible,
+.faq-q:focus-visible,
+.wtab:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+pre[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Respect users who ask the OS to reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─────────────────────────────────────────
+   LAYOUT
+───────────────────────────────────────── */
+.wrap {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+section { padding: var(--gap) 0; }
+
+/* Offset anchor targets so headings clear the fixed 62px nav */
+section[id], [id] { scroll-margin-top: 80px; }
+
+/* ─────────────────────────────────────────
+   TYPE SCALE
+───────────────────────────────────────── */
+.eyebrow {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.display {
+  font-size: clamp(36px, 5.5vw, 60px);
+  font-weight: 700;
+  line-height: 1.07;
+  letter-spacing: -0.035em;
+  color: var(--text);
+}
+
+.display em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+h2 {
+  font-size: clamp(26px, 3.5vw, 40px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+h3 {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.lead {
+  font-size: var(--fs-lg);
+  line-height: 1.7;
+  color: var(--text-2);
+  max-width: 50ch;
+  margin-top: 14px;
+}
+
+/* ─────────────────────────────────────────
+   BUTTONS
+───────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  padding: 11px 22px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+  white-space: normal;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.btn:hover { text-decoration: none; transform: translateY(-1px); }
+.btn svg { flex-shrink: 0; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+
+.btn-primary:hover {
+  background: #00DEAD;
+  border-color: #00DEAD;
+  box-shadow: 0 6px 22px var(--accent-glow);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  border-color: var(--border);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  border-color: var(--text-3);
+}
+
+.btn-lg { font-size: var(--fs-base); padding: 13px 26px; }
+
+/* ─────────────────────────────────────────
+   NAV
+───────────────────────────────────────── */
+#nav {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 200;
+  padding: 0 24px;
+  border-bottom: 1px solid transparent;
+  transition: background 0.25s, border-color 0.25s;
+}
+
+#nav.solid {
+  background: rgba(7, 9, 15, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: var(--border-dim);
+}
+
+.nav-row {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.nav-logo span { color: var(--accent); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-link {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-2);
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.nav-link:hover { color: var(--text); text-decoration: none; }
+
+.nav-burger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  padding: 8px;
+  margin: -8px;
+}
+
+
+/* ─────────────────────────────────────────
+   FOOTER
+───────────────────────────────────────── */
+footer {
+  padding: 36px 0;
+  border-top: 1px solid var(--border-dim);
+}
+
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.footer-links { display: flex; gap: 22px; flex-wrap: wrap; }
+
+.footer-links a {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color 0.13s;
+}
+
+.footer-links a:hover { color: var(--text-2); }
+
+.footer-copy { font-size: var(--fs-sm); color: var(--text-3); }
+
+@media (max-width: 640px) {
+
+  /* Mobile nav: collapse links into a burger-triggered dropdown */
+  .nav-burger  { display: flex; }
+  .nav-links {
+    position: absolute;
+    top: 62px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 8px 24px 18px;
+    background: rgba(7, 9, 15, 0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-dim);
+    display: none;
+    max-height: calc(100dvh - 62px);
+    overflow-y: auto;
+  }
+  #nav.menu-open .nav-links { display: flex; }
+  .nav-links .nav-link {
+    display: block;
+    padding: 13px 0;
+    font-size: var(--fs-base);
+    border-bottom: 1px solid var(--border-dim);
+  }
+  .nav-links .btn-primary {
+    margin: 14px 0 0 !important;
+    width: 100%;
+    justify-content: center;
+    font-size: var(--fs-base) !important;
+    padding: 12px 18px !important;
+  }
+}
+
+/* ─────────────────────────────────────────
+   BLOG — page frame
+   Built only from brand.css tokens and the shared rules above.
+───────────────────────────────────────── */
+main { min-height: 60vh; overflow-x: clip; }
+
+.nav-link.is-active { color: var(--text); }
+
+.blog-head,
+.post-head {
+  padding-top: 152px;
+  position: relative;
+}
+
+/* Same soft teal glow as the og-image, kept subtle */
+.blog-head::before,
+.post-head::before {
+  content: '';
+  position: absolute;
+  top: 40px;
+  left: -120px;
+  width: 640px;
+  height: 360px;
+  background: radial-gradient(ellipse at center, rgba(0, 200, 151, 0.10), transparent 68%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.post-title {
+  font-size: clamp(30px, 4.5vw, 48px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  color: var(--text);
+  max-width: 22ch;
+}
+
+.blog-head .lead,
+.post-lead { max-width: 60ch; }
+
+.post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+}
+
+.post-head .post-meta { margin-top: 22px; }
+
+.post-back,
+.post-feed {
+  display: inline-block;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 26px;
+}
+.post-back { display: block; width: fit-content; }
+
+.post-back:hover,
+.post-feed:hover { color: var(--text); text-decoration: none; }
+
+.post-feed {
+  margin: 22px 0 0;
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+
+/* ─────────────────────────────────────────
+   BLOG — post list
+───────────────────────────────────────── */
+.blog-list {
+  display: grid;
+  gap: 14px;
+  padding-top: 56px;
+  padding-bottom: var(--gap);
+}
+
+.blog-list > * { max-width: 760px; }
+
+.post-card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 26px 28px;
+  color: var(--text);
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.post-card:hover {
+  text-decoration: none;
+  border-color: var(--accent-mid);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.post-card-title {
+  font-size: var(--fs-xl);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  margin-top: 10px;
+}
+
+.post-card-desc {
+  font-size: var(--fs-base);
+  line-height: 1.65;
+  color: var(--text-2);
+  margin-top: 8px;
+}
+
+.post-card-more {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.blog-empty { color: var(--text-3); }
+
+/* ─────────────────────────────────────────
+   BLOG — article
+───────────────────────────────────────── */
+.post { padding-bottom: var(--gap); }
+
+.post-head,
+.prose,
+.post-cta { max-width: 720px; }
+
+.prose {
+  margin-top: 48px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border-dim);
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-2);
+}
+
+.prose > * + * { margin-top: 1.1em; }
+
+.prose h2 {
+  font-size: var(--fs-xl);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  margin-top: 2.2em;
+}
+
+.prose h3 { margin-top: 1.8em; }
+.prose h2 + *, .prose h3 + * { margin-top: 0.6em; }
+
+.prose strong { color: var(--text); font-weight: 600; }
+
+.prose a { text-decoration: underline; text-decoration-color: var(--accent-mid); text-underline-offset: 3px; }
+.prose a:hover { text-decoration-color: var(--accent); }
+
+.prose ul, .prose ol { padding-left: 1.3em; }
+.prose li + li { margin-top: 0.4em; }
+.prose li::marker { color: var(--accent); }
+
+.prose blockquote {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-dim);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: 14px 18px;
+  color: var(--text);
+}
+
+.prose hr { border: none; border-top: 1px solid var(--border-dim); margin: 2.4em 0; }
+
+.prose img { max-width: 100%; height: auto; border-radius: var(--r); border: 1px solid var(--border); }
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  display: block;
+  overflow-x: auto;
+}
+.prose th, .prose td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border-dim); }
+.prose th { color: var(--text); font-weight: 600; border-bottom-color: var(--border); }
+
+/* Inline code — same treatment as the landing page's inline code */
+.prose :not(pre) > code {
+  font-family: var(--mono);
+  font-size: 0.875em;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-dim);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Code blocks — styled like the landing page's code window */
+.prose pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px 22px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  line-height: 1.75;
+  tab-size: 2;
+  color: var(--text);
+}
+.prose pre code { font-family: inherit; background: none; border: 0; padding: 0; }
+.prose div.highlighter-rouge { margin-top: 1.4em; }
+
+/* Rouge token colours mapped to the landing page's restrained palette */
+.highlight .k, .highlight .kd, .highlight .kn, .highlight .kp, .highlight .kr, .highlight .kt,
+.highlight .o, .highlight .ow                    { color: #8F9AB8; }
+.highlight .nf, .highlight .fm, .highlight .nb   { color: var(--accent); }
+.highlight .s, .highlight .s1, .highlight .s2, .highlight .sb, .highlight .sd,
+.highlight .se, .highlight .sh, .highlight .si, .highlight .sx { color: #A8B89C; }
+.highlight .m, .highlight .mi, .highlight .mf, .highlight .mh, .highlight .mo,
+.highlight .kc                                   { color: #C2A98E; }
+.highlight .c, .highlight .c1, .highlight .cm, .highlight .cs, .highlight .ch,
+.highlight .cp                                   { color: var(--text-3); font-style: italic; }
+.highlight .nc, .highlight .nn, .highlight .nt   { color: #6FD3C0; }
+.highlight .nv, .highlight .vi, .highlight .na, .highlight .nx { color: #CBD3E1; }
+.highlight .p                                    { color: var(--text-3); }
+.highlight .gd                                   { color: var(--danger); }
+.highlight .gi                                   { color: var(--accent); }
+
+/* ─────────────────────────────────────────
+   BLOG — end-of-post CTA
+───────────────────────────────────────── */
+.post-cta {
+  margin-top: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 28px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--accent-mid);
+  border-radius: var(--r-xl);
+  padding: 28px 30px;
+  box-shadow: 0 0 0 1px var(--accent-dim), var(--shadow);
+}
+
+.post-cta p { font-size: var(--fs-base); color: var(--text-2); margin-top: 6px; }
+
+/* ─────────────────────────────────────────
+   BLOG — comments (giscus)
+───────────────────────────────────────── */
+.post-comments {
+  max-width: 720px;
+  margin-top: 72px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border-dim);
+}
+
+.post-comments-title {
+  font-size: var(--fs-xl);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.post-comments-note {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  margin: 8px 0 24px;
+}
+
+.post-comments .giscus,
+.post-comments .giscus-frame { width: 100%; color-scheme: dark; }
+
+@media (max-width: 640px) {
+  .blog-head, .post-head { padding-top: 110px; }
+  .post-card { padding: 22px 20px; }
+  .post-cta { padding: 24px 22px; }
+  .post-cta .btn { width: 100%; justify-content: center; }
+}
