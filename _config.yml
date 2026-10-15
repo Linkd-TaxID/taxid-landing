@@ -66,3 +66,9 @@ exclude:
   - vendor/
   - node_modules/
   - .jekyll-cache/
+  - .github/
+  - scripts/
+  - tests/
+  - docs/
+  - REPOSITORY_POLICY.md
+  - fonts/README.md
