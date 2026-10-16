@@ -1,5 +1,11 @@
 # Landing receipt relay
 
+The connected creator/retail landing examples use the bounded, same-origin
+`/v2/preview` simulator relay. They do not call this Worker. The local acceptance
+runner serves a private copy of the existing landing under `/workspace/phase4/`
+alongside that relay. Static hosting without this relay reports unavailable;
+there is no automatic fallback to an illustrative receipt.
+
 Optional Cloudflare Worker for the landing receipt sample. The landing currently
 leaves `DEMO_SIGN_URL` empty and renders a labelled local sample. This relay is
 not the invited developer workspace and is not enabled by this documentation.
@@ -40,3 +46,8 @@ Do not treat its label as evidence of KRA sandbox submission or central acceptan
 Use the invited simulator workspace for the maintained submit, lookup and recovery
 journey. `SIGNED` means a persisted control-unit receipt; central KRA acceptance
 requires separate evidence. Current TaxID developer access issues simulated output.
+
+The application selects VSCU or OSCU on separate synthetic backends; visitors do
+not select a technical transport. Connected samples use itemised business input
+in either mode. This Worker remains inactive. The application relay owns session
+revocation, operation limits and recovery by the original reference.

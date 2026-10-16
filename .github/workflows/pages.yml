@@ -29,6 +29,8 @@ jobs:
         run: python3 scripts/check_repository.py --ref "$GITHUB_SHA"
       - name: Test publication policy
         run: python3 -m unittest discover -s tests -p 'test_site.py'
+      - name: Test connected simulator recovery
+        run: node --test tests/test_connected_demo.mjs
       - name: Build Jekyll site
         env:
           INPUT_TOKEN: ${{ github.token }}
