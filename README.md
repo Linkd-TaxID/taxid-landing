@@ -13,6 +13,12 @@ fixtures in `connected-demo.js`. They make no API requests. The controls
 illustrate successful, pending and uncertain outcomes, recovery using the same
 reference, duplicate recovery, a separate platform fee and a partial return.
 Changing a selection clears the old result; refreshing clears all sample state.
+Each signed result includes a “See a sample receipt” disclosure with that
+example's items, reference and net/VAT/total figures. Fees and returns have
+separate previews. Uncertain and pending results show a preview after lookup
+illustrates recovery. Control-unit fields are labelled placeholders; the
+previews contain no verification QR. These replace the standalone receipt
+calculator.
 Receipt numbers and recovery transitions are illustrations, not evidence of
 control-unit signing or KRA acceptance. Use the invited workspace for connected
 integration testing.

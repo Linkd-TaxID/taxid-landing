@@ -5,9 +5,9 @@ requests and do not use this Worker. Their statuses, receipt numbers, lookup and
 recovery outcomes are illustrations, not evidence of fiscal signing. Connected
 integration testing belongs in the invited simulator workspace.
 
-Optional Cloudflare Worker for the landing receipt sample. The landing currently
-leaves `DEMO_SIGN_URL` empty and renders a labelled local sample. This relay is
-not the invited developer workspace and is not enabled by this documentation.
+Retained Cloudflare Worker from the former standalone receipt sample. The
+landing no longer contains its endpoint setting or calls this relay. It is not
+the invited developer workspace and is not enabled by this documentation.
 
 The Worker forwards `POST /v2/etims/sale` to `https://api.taxid.co.ke`, holding
 `SANDBOX_API_KEY` and `SUPPLIER_PIN` as server-side secret bindings. The browser
