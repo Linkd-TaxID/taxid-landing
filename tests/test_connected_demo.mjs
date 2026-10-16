@@ -5,9 +5,8 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../connected-demo.js', import.meta.url), 'utf8');
 
-function simulator(respond) {
+function simulator() {
   const elements = new Map();
-  const requests = [];
   function element(id) {
     if (!elements.has(id)) elements.set(id, {
       value: '', disabled: false, hidden: false, children: [], listeners: {},
@@ -23,86 +22,94 @@ function simulator(respond) {
   element('connected-residency').value = 'resident';
   vm.runInNewContext(source, {
     document: {getElementById: element, createElement: () => element(Symbol())},
-    crypto: {randomUUID: () => 'original-sale'}, AbortController, setTimeout, clearTimeout,
-    fetch: async (url, options) => {
-      const request = {url, method: options.method,
-        body: options.body ? JSON.parse(options.body) : undefined};
-      requests.push(request);
-      const result = await respond(request);
-      return {ok: result.ok !== false, json: async () => result.body};
-    },
+    fetch: () => { assert.fail('Local examples must not make API requests'); },
   });
-  return {element, requests, click: id => element('connected-' + id).listeners.click(),
+  return {element, click: id => element('connected-' + id).listeners.click(),
     change: (id, value) => {
       element('connected-' + id).value = value;
-      element('connected-' + id).listeners.change?.();
+      element('connected-' + id).listeners.change();
     },
     output: () => element('connected-results').children.flatMap(row =>
       row.children.map(cell => cell.textContent)).join('\n')};
 }
 
-function signed(request) {
-  if (request.url.endsWith('/session')) return {body: {environment: 'SIMULATED', kraSubmission: false}};
-  if (request.url.endsWith('/demo-calculation')) return {body: {
-    calculatedWithholding: 58, netPayable: 967.44, platformFee: 116, platformFeeVat: 18.56,
-  }};
-  return {body: {status: 'SIGNED', clientReference: 'landing-original-sale', purchaseId: 42,
-    cuInvoiceNumber: 'SIMULATED-42'}};
+test('creator local calculation and duplicate recovery retain the same sample receipt', () => {
+  const app = simulator();
+  app.click('run');
+  assert.match(app.output(), /Simulated withholding estimate\nKES 58.00/);
+  assert.match(app.output(), /Projected payout · not paid\nKES 967.44/);
+  app.click('duplicate');
+  assert.match(app.output(), /Recovered duplicate · same sample receipt/);
+  assert.match(app.output(), /DEMO-0001-RECEIPT/);
+  assert.doesNotMatch(app.output(), /DEMO-0002/);
+  app.click('fee');
+  assert.match(app.output(), /Separate platform fee invoice/);
+  assert.match(app.output(), /KES 134.56 \/ KES 18.56/);
+  assert.equal(app.element('connected-fee').disabled, true);
+});
+
+test('retail selection changes the workflow and returns one notebook at its original price and tax', () => {
+  const app = simulator();
+  assert.equal(app.element('connected-return').hidden, true);
+  app.change('kind', 'retail');
+  assert.equal(app.element('creator-example').hidden, true);
+  assert.equal(app.element('retail-example').hidden, false);
+  assert.equal(app.element('connected-fee').hidden, true);
+  assert.match(app.element('connected-message').textContent, /Retail basket: KES 290.00/);
+  app.click('run');
+  assert.match(app.output(), /KES 290.00 \/ KES 40.00/);
+  app.click('return');
+  assert.match(app.output(), /Partial return · one original notebook/);
+  assert.match(app.output(), /KES 116.00 \/ KES 16.00/);
+  assert.match(app.output(), /Return against original reference\nDEMO-0001/);
+  const firstReturn = app.output();
+  app.click('return');
+  assert.equal(app.output(), firstReturn);
+  assert.equal(app.element('connected-return').disabled, true);
+});
+
+for (const scenario of ['AMBIGUOUS_TIMEOUT_AFTER_SIGN', 'HELD_BRANCH']) {
+  test(scenario + ' illustrates lookup recovery without a replacement reference', () => {
+    const app = simulator();
+    app.change('scenario', scenario);
+    assert.equal(app.element('connected-pending-note').hidden, scenario !== 'HELD_BRANCH');
+    app.click('run');
+    assert.match(app.output(), scenario === 'HELD_BRANCH' ? /PENDING_SYNC/ : /OUTCOME_UNKNOWN/);
+    assert.equal(app.element('connected-duplicate').disabled, true);
+    assert.equal(app.element('connected-fee').disabled, true);
+    assert.equal(app.element('connected-lookup').disabled, false);
+    app.click('lookup');
+    assert.match(app.output(), /Original lookup · same reference/);
+    assert.match(app.output(), /SIGNED/);
+    assert.match(app.output(), /DEMO-0001-RECEIPT/);
+    assert.doesNotMatch(app.output(), /DEMO-0002/);
+    assert.match(app.element('connected-message').textContent, /Local recovery illustration/);
+    assert.equal(app.element('connected-duplicate').disabled, false);
+  });
 }
 
-test('creator duplicate recovery reuses the original request and displays simulated figures', async () => {
-  const app = simulator(signed);
-  await app.click('run');
-  assert.match(app.output(), /Simulated withholding estimate\nKES 58/);
-  assert.match(app.output(), /Projected payout · not paid/);
-  await app.click('duplicate');
-  const sales = app.requests.filter(request => request.url.endsWith('/sample-sales'));
-  assert.equal(sales.length, 2);
-  assert.deepEqual(sales[0].body, sales[1].body);
-  assert.match(app.output(), /Recovered duplicate · same identity/);
-});
-
-test('retail sends the itemised basket and returns against the original reference', async () => {
-  const app = simulator(request => request.url.includes('/retail-sales/search')
-    ? {body: {invoice: {amount: 290, taxAmount: 40}}} : signed(request));
-  app.change('kind', 'retail');
-  await app.click('run');
-  const sale = app.requests.find(request => request.url.endsWith('/retail-sales'));
-  assert.equal(sale.body.items.length, 2);
-  assert.equal(sale.body.items[0].qty, 2);
-  assert.equal(app.element('connected-return').disabled, false);
-  await app.click('return');
-  const returned = app.requests.find(request => request.url.endsWith('/demo-return'));
-  assert.equal(returned.body.originalReference, sale.body.clientReference);
-});
-
-test('uncertain signing blocks replacement and duplicate submissions while allowing original lookup', async () => {
-  let resolved = false;
-  const app = simulator(request => request.url.endsWith('/sample-sales') || request.url.includes('/sales/search')
-    ? {body: {status: resolved ? 'SIGNED' : 'OUTCOME_UNKNOWN', purchaseId: 42}} : signed(request));
-  await app.click('run');
-  assert.equal(app.element('connected-run').disabled, true);
-  assert.equal(app.element('connected-duplicate').disabled, true);
-  assert.equal(app.element('connected-lookup').disabled, false);
-  resolved = true;
-  await app.click('lookup');
-  assert.match(app.requests.at(-1).url, /clientReference=landing-original-sale$/);
-  assert.equal(app.element('connected-run').disabled, false);
-});
-
-test('unavailable simulator does not invent a receipt', async () => {
-  const app = simulator(() => { throw new Error('Simulator unavailable'); });
-  await app.click('run');
-  assert.match(app.element('connected-message').textContent, /unavailable/);
+test('changing residency clears stale figures and produces the selected withholding estimate', () => {
+  const app = simulator();
+  app.click('run');
+  app.change('residency', 'nonresident');
   assert.equal(app.output(), '');
-  assert.equal(app.element('connected-duplicate').disabled, true);
+  assert.match(app.element('connected-message').textContent, /20%/);
+  assert.equal(app.element('connected-lookup').disabled, true);
+  app.click('run');
+  assert.match(app.output(), /Simulated withholding estimate\nKES 232.00/);
+  assert.match(app.output(), /Projected payout · not paid\nKES 793.44/);
+  assert.match(app.output(), /DEMO-0002/);
 });
 
-test('failed signing response retains the original reference for lookup', async () => {
-  const app = simulator(request => request.url.endsWith('/sample-sales')
-    ? {ok: false, body: {message: 'Connection lost'}} : signed(request));
-  await app.click('run');
-  assert.match(app.element('connected-message').textContent, /landing-original-sale/);
-  assert.equal(app.element('connected-run').disabled, true);
-  assert.equal(app.element('connected-lookup').disabled, false);
+test('changing workflow or outcome clears old results and disables actions until run', () => {
+  const app = simulator();
+  for (const [selection, value] of [['kind', 'retail'], ['scenario', 'HELD_BRANCH']]) {
+    app.click('run');
+    app.change(selection, value);
+    assert.equal(app.output(), '');
+    assert.equal(app.element('connected-lookup').disabled, true);
+    assert.equal(app.element('connected-duplicate').disabled, true);
+    assert.equal(app.element('connected-return').disabled, true);
+    assert.equal(app.element('connected-fee').disabled, true);
+  }
 });

@@ -6,6 +6,19 @@ Source for [taxid.co.ke](https://taxid.co.ke), served by GitHub Pages.
 - `blog/`, `_posts/`, `_layouts/`, `_includes/`, `assets/blog.css`: the blog at `/blog/`.
 - `worker/`: optional Cloudflare Worker, deployed separately and excluded from the site build.
 
+## Interactive examples
+
+The creator and retail examples run entirely in the browser using synthetic
+fixtures in `connected-demo.js`. They make no API requests. The controls
+illustrate successful, pending and uncertain outcomes, recovery using the same
+reference, duplicate recovery, a separate platform fee and a partial return.
+Changing a selection clears the old result; refreshing clears all sample state.
+Receipt numbers and recovery transitions are illustrations, not evidence of
+control-unit signing or KRA acceptance. Use the invited workspace for connected
+integration testing.
+
+Run the example checks with `node --test tests/test_connected_demo.mjs`.
+
 ## Writing a blog post
 
 1. Add a file to `_posts/` named `YYYY-MM-DD-short-slug.md`. The URL becomes `/blog/short-slug/`.
