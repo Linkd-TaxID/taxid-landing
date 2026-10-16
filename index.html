@@ -1118,7 +1118,7 @@
     }
 
     /* ─────────────────────────────────────────
-       INTERACTIVE DEMO — "sign a test receipt"
+       INTERACTIVE WORKFLOWS
     ───────────────────────────────────────── */
     .demo-grid {
       margin-top: 44px;
@@ -1127,7 +1127,6 @@
       gap: 44px;
       align-items: start;
     }
-    .demo-field { margin-bottom: 22px; }
     .demo-label {
       display: block;
       font-family: var(--mono);
@@ -1137,52 +1136,6 @@
       color: var(--text-3);
       margin-bottom: 10px;
     }
-    .demo-amount {
-      display: flex;
-      align-items: center;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 0 14px;
-      transition: border-color 0.13s;
-    }
-    .demo-amount:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-    .demo-amount .cur {
-      font-family: var(--mono);
-      font-size: var(--fs-sm);
-      color: var(--text-3);
-      padding-right: 10px;
-    }
-    .demo-amount input {
-      flex: 1; width: 100%; min-width: 0;
-      background: transparent; border: 0; outline: 0;
-      color: var(--text);
-      font-family: var(--mono);
-      font-size: var(--fs-lg);
-      padding: 13px 0;
-      -moz-appearance: textfield;
-    }
-    .demo-amount input::-webkit-outer-spin-button,
-    .demo-amount input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-    .demo-bands { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-    .demo-band {
-      font-family: var(--mono);
-      padding: 9px 6px;
-      border-radius: var(--r-sm);
-      border: 1px solid var(--border);
-      background: var(--bg);
-      cursor: pointer;
-      transition: border-color 0.13s, background 0.13s;
-      text-align: center;
-      line-height: 1.3;
-    }
-    .demo-band b { display: block; font-size: var(--fs-md); color: var(--text); }
-    .demo-band .rate { font-size: 11px; color: var(--text-3); overflow-wrap: anywhere; }
-    .demo-band:hover { border-color: var(--text-3); }
-    .demo-band.on { border-color: var(--accent); background: var(--accent-dim); }
-    .demo-band.on b, .demo-band.on .rate { color: var(--accent); }
-
     .demo-split {
       margin-top: 24px;
       border: 1px solid var(--border-dim);
@@ -1200,12 +1153,14 @@
     .demo-split-row:last-child { border-bottom: 0; }
     .demo-split-row span:first-child { color: var(--text-2); }
     .demo-split-row span:last-child { color: var(--text); font-variant-numeric: tabular-nums; }
-    .demo-split-row.gross { background: var(--accent-dim); }
-    .demo-split-row.gross span { color: var(--accent); font-weight: 600; }
 
     .demo-sign { margin-top: 24px; width: 100%; justify-content: center; }
     .demo-sign[disabled] { opacity: 0.6; cursor: default; box-shadow: none; }
 
+    .receipt-preview { margin-top: 20px; }
+    .receipt-preview summary { cursor: pointer; color: var(--accent); padding: 8px 0; }
+    .receipt-preview summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .receipt-preview[open] summary { margin-bottom: 12px; }
     .demo-receipt {
       background: #FCFBF7; color: #1A1D1A;
       border-radius: var(--r);
@@ -1213,7 +1168,6 @@
       font-family: var(--mono);
       font-size: 12.5px; line-height: 1.55;
       box-shadow: var(--shadow-lg);
-      min-height: 340px;
       position: relative;
     }
     .rc-sample {
@@ -1225,41 +1179,16 @@
       border: 1px solid #805D10;
       border-radius: 4px; padding: 2px 6px;
     }
-    .rc-sample.live {
-      color: #0E7A56;
-      border-color: rgba(14, 122, 86, 0.5);
-      display: inline-flex; align-items: center; gap: 5px;
-    }
-    .rc-sample.live::before {
-      content: ""; width: 6px; height: 6px; border-radius: 50%;
-      background: #16A46F; box-shadow: 0 0 0 3px rgba(22, 164, 111, 0.18);
-    }
-    .demo-receipt.empty {
-      display: flex; align-items: center; justify-content: center; text-align: center;
-      background: var(--bg); color: var(--text-3);
-      border: 1px dashed var(--border);
-      box-shadow: none; font-family: var(--font); font-size: var(--fs-sm);
-      padding: 24px; line-height: 1.6;
-    }
-    .demo-receipt.signing { opacity: 0.45; }
-    @keyframes rc-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-    .demo-receipt.revealed { animation: rc-in 0.4s ease; }
     .rc-c { text-align: center; }
     .rc-nm { font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
     .rc-mut { color: #6A6F66; }
     .demo-receipt hr { border: 0; border-top: 1px dashed #C9C7BE; margin: 11px 0; }
-    .demo-receipt hr.solid { border-top: 1px solid #C9C7BE; }
     .rc-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
     .rc-row > span { min-width: 0; overflow-wrap: anywhere; }
-    .rc-lab { text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; color: #6A6F66; }
-    .rc-band { color: #0E7A5F; font-weight: 700; }
     .rc-tot { font-weight: 700; font-size: 13.5px; }
-    .rc-fisc { text-align: center; color: #0E7A5F; font-weight: 700; letter-spacing: 0.12em; font-size: 11px; }
     dl.rc-kv { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 3px 12px; margin: 8px 0 0; }
     dl.rc-kv dt { color: #6A6F66; text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; }
     dl.rc-kv dd { margin: 0; text-align: right; word-break: break-all; }
-    dl.rc-kv dd.sig { color: #0E7A5F; }
-    .rc-qr { display: block; margin: 12px auto 4px; width: 118px; height: 118px; image-rendering: pixelated; }
     .demo-note {
       margin-top: 14px; font-size: 13px; color: var(--text-3);
       text-align: center; line-height: 1.55;
@@ -1304,7 +1233,6 @@
       .waitlist-grid { grid-template-columns: 1fr; gap: 44px; }
       .demo-grid     { grid-template-columns: 1fr; gap: 32px; }
       .signoff-grid  { grid-template-columns: 1fr; }
-      .demo-receipt  { min-height: 0; }
 
       .reference-states { grid-template-columns: 1fr; gap: 20px; }
     }
@@ -1683,46 +1611,11 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
         <div>
           <p id="connected-message" role="status" aria-live="polite">Ready to run a local simulation. No API connection is needed.</p>
           <div id="connected-results" class="demo-split" aria-live="polite"></div>
+          <div id="connected-receipts"></div>
           <p class="demo-note">All statuses and receipt numbers here are browser-generated illustrations. SIGNED does not establish control-unit signing or central KRA acceptance. Lookup demonstrates recovery using the original reference. Financial figures are estimates, not deductions, verified receipts of money or paid payouts.</p>
         </div>
       </div>
     </div>
-    <details style="margin-top:32px"><summary>Inspect the local receipt-format illustration</summary>
-    <div class="demo-grid">
-      <div>
-        <div class="demo-field">
-          <label class="demo-label" for="demo-amt">Sale amount · VAT-inclusive</label>
-          <div class="demo-amount">
-            <span class="cur">KES</span>
-            <input id="demo-amt" type="number" min="0" step="1" value="5800" inputmode="decimal" oninput="demoRecalc()" aria-label="Sale amount in Kenyan shillings">
-          </div>
-        </div>
-
-        <div class="demo-field">
-          <span class="demo-label">Tax band</span>
-          <div class="demo-bands" role="group" aria-label="KRA tax band">
-            <button type="button" class="demo-band" data-band="A" aria-pressed="false" onclick="demoBand(this)"><b>A</b><span class="rate">Exempt · 0%</span></button>
-            <button type="button" class="demo-band on" data-band="B" aria-pressed="true" onclick="demoBand(this)"><b>B</b><span class="rate">Std · 16%</span></button>
-            <button type="button" class="demo-band" data-band="C" aria-pressed="false" onclick="demoBand(this)"><b>C</b><span class="rate">Zero · 0%</span></button>
-            <button type="button" class="demo-band" data-band="D" aria-pressed="false" onclick="demoBand(this)"><b>D</b><span class="rate">Non-VAT · 0%</span></button>
-          </div>
-        </div>
-
-        <div class="demo-split" aria-live="polite">
-          <div class="demo-split-row"><span>Taxable (net)</span><span id="demo-net">—</span></div>
-          <div class="demo-split-row"><span>VAT</span><span id="demo-vat">—</span></div>
-          <div class="demo-split-row gross"><span>Total (gross)</span><span id="demo-gross">—</span></div>
-        </div>
-
-        <button type="button" id="demo-btn" class="btn btn-primary btn-lg demo-sign" onclick="demoSign()">Preview sample receipt</button>
-      </div>
-
-      <div>
-        <div id="demo-receipt" class="demo-receipt empty"><p>Set an amount and a band, then press <b style="color:var(--text-2)">Preview sample receipt</b> to generate a sample.</p></div>
-        <p class="demo-note" id="demo-note">Illustrative calculation and sample receipt; no request is submitted to KRA. Confirm applicable tax classification separately.</p>
-      </div>
-    </div>
-    </details>
   </div>
 </section>
 
@@ -2016,204 +1909,6 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
   /* Hero code window: python/curl tab stability is handled entirely in CSS now —
      both panes are grid-stacked, so switching tabs can't resize or reflow the window. */
 
-  /* ── Interactive "sign a test receipt" demo ── */
-  (function () {
-    var RATES = { A: 0, B: 0.16, C: 0, D: 0 };
-    // Live-signing endpoint (the taxid-demo-sign Cloudflare Worker in ./worker).
-    // Set this to the URL that `npx wrangler deploy` prints, e.g.
-    //   "https://taxid-demo-sign.<your-subdomain>.workers.dev"
-    // While it is empty — or if the Worker is unreachable — the demo falls back
-    // to a clearly-labelled client-side sample, so the page never breaks.
-    var DEMO_SIGN_URL = "";
-    var band = 'B';
-    // One idempotency id per receipt attempt, reused until it comes back signed:
-    // Preserve the reference for lookup; uncertain outcomes need reconciliation.
-    // Changing the amount or band starts a distinct attempt.
-    var attempt = null;
-    var amtEl = document.getElementById('demo-amt');
-    if (!amtEl) return;
-
-    function round2(x) { return Math.round((x + Number.EPSILON) * 100) / 100; }
-    function fmt(x) { return x.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-    function pad(n) { return (n < 10 ? '0' : '') + n; }
-    function uuid() {
-      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-      var b = crypto.getRandomValues(new Uint8Array(16)), h = [];
-      b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
-      for (var i = 0; i < 16; i++) h.push((b[i] + 256).toString(16).slice(1));
-      return h.slice(0, 4).join('') + '-' + h.slice(4, 6).join('') + '-' + h.slice(6, 8).join('') + '-' + h.slice(8, 10).join('') + '-' + h.slice(10).join('');
-    }
-    function hex(n) { var s = '', a = '0123456789ABCDEF'; for (var i = 0; i < n; i++) s += a[Math.floor(Math.random() * 16)]; return s; }
-
-    function calc() {
-      var amt = round2(parseFloat(amtEl.value) || 0);
-      var rate = RATES[band];
-      var net = round2(amt / (1 + rate));
-      return { amt: amt, net: net, vat: round2(amt - net), rate: rate };
-    }
-
-    window.demoRecalc = function () {
-      var s = calc();
-      document.getElementById('demo-net').textContent = 'KES ' + fmt(s.net);
-      document.getElementById('demo-vat').textContent = 'KES ' + fmt(s.vat);
-      document.getElementById('demo-gross').textContent = 'KES ' + fmt(s.amt);
-    };
-
-    window.demoBand = function (btn) {
-      band = btn.getAttribute('data-band');
-      document.querySelectorAll('.demo-band').forEach(function (b) {
-        var on = b === btn;
-        b.classList.toggle('on', on);
-        b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      });
-      demoRecalc();
-    };
-
-    var LIVE_NOTE = 'Connected demo response — verify the configured environment and outcome. This page does not establish KRA acceptance or production approval; the QR is illustrative.';
-    var SAMPLE_NOTE = 'Illustrative preview — receipt fields and QR are generated samples, not fiscal invoices. No request is submitted to KRA. Confirm applicable tax classification separately.';
-
-    // Merchant details and QR are illustrative, including for connected responses.
-    function renderReceipt(box, r, live) {
-      box.innerHTML =
-        '<div class="rc-sample' + (live ? ' live' : '') + '">' + (live ? 'CONNECTED DEMO' : 'SIMULATED SAMPLE') + '</div>' +
-        '<div class="rc-c"><div class="rc-nm">DEMO MERCHANT LTD</div>' +
-        '<div class="rc-mut">Nairobi · PIN A000123456B · Branch 00</div></div>' +
-        '<hr><div class="rc-c rc-lab">Sample receipt · ' + r.dmy + '</div><hr>' +
-        '<div class="rc-row"><span>Sale item</span><span>KES ' + fmt(r.gross) + ' <span class="rc-band">' + r.band + '</span></span></div>' +
-        '<hr><div class="rc-row rc-tot"><span>TOTAL</span><span>KES ' + fmt(r.gross) + '</span></div>' +
-        '<hr><div class="rc-lab rc-c">Net / VAT / Gross — Band ' + r.band + ' · ' + r.pct + '%</div>' +
-        '<div class="rc-row"><span>' + r.band + '</span><span>' + fmt(r.net) + ' / ' + fmt(r.vat) + ' / ' + fmt(r.gross) + '</span></div>' +
-        '<hr class="solid"><div class="rc-fisc">◆ ILLUSTRATIVE RECEIPT ◆</div><hr class="solid">' +
-        '<dl class="rc-kv">' +
-          '<dt>SCU ID</dt><dd>' + esc(r.scu) + '</dd>' +
-          '<dt>CU Inv No</dt><dd>' + esc(r.cuInv) + '</dd>' +
-          '<dt>Rcpt Sign</dt><dd class="sig">' + esc(r.sig) + '</dd>' +
-          '<dt>Signed</dt><dd>' + esc(r.signed) + '</dd>' +
-        '</dl>' +
-        '<canvas class="rc-qr" width="242" height="242" aria-hidden="true"></canvas>' +
-        '<div class="rc-c rc-mut" style="font-size:10px;margin-top:2px">Powered by TaxID</div>';
-      drawQR(box.querySelector('.rc-qr'), r.qrSeed);
-      box.classList.remove('signing'); box.classList.add('revealed');
-      var note = document.getElementById('demo-note');
-      if (note) note.textContent = live ? LIVE_NOTE : SAMPLE_NOTE;
-    }
-
-    function esc(v) {
-      return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-      });
-    }
-
-    // Local illustrative receipt; this function does not submit a sale.
-    function sampleReceipt(s) {
-      var now = new Date();
-      var d = pad(now.getDate()) + pad(now.getMonth() + 1) + now.getFullYear();
-      var t = pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
-      var scu = 'KRACU' + pad(1 + Math.floor(Math.random() * 8)) + '000000' + hex(2);
-      var inv = 100 + Math.floor(Math.random() * 900);
-      var sig = hex(16);
-      return {
-        band: band, pct: (s.rate * 100).toFixed(0),
-        net: s.net, vat: s.vat, gross: s.amt,
-        scu: scu, cuInv: scu + '/' + inv + ' NS', sig: sig,
-        dmy: d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4),
-        signed: d + ' ' + t, qrSeed: d + '#' + t + '#' + scu + '#' + sig,
-      };
-    }
-
-    // Map the Worker's SIGNED response into the render shape.
-    function liveReceipt(data) {
-      var ts = String(data.vscuTimestamp || '');           // YYYYMMDDhhmmss
-      var Y = ts.slice(0, 4), M = ts.slice(4, 6), D = ts.slice(6, 8), hms = ts.slice(8, 14);
-      var dmy8 = D + M + Y;
-      return {
-        band: data.band, pct: String(data.rate || '').replace('%', ''),
-        net: parseFloat(data.net), vat: parseFloat(data.vat), gross: parseFloat(data.gross),
-        scu: data.sdcId, cuInv: data.cuInvoiceNumber, sig: data.receiptSignature,
-        dmy: D + '/' + M + '/' + Y,
-        signed: dmy8 + ' ' + hms,
-        qrSeed: data.kraQrPayload || (dmy8 + '#' + hms + '#' + data.sdcId + '#' + data.receiptSignature),
-      };
-    }
-
-    window.demoSign = function () {
-      var btn = document.getElementById('demo-btn');
-      var box = document.getElementById('demo-receipt');
-      var note = document.getElementById('demo-note');
-      var s = calc();
-      var label = btn.getAttribute('data-label') || btn.textContent;
-      btn.setAttribute('data-label', label);
-      btn.disabled = true; btn.textContent = 'Preparing preview…';
-      box.classList.remove('empty', 'revealed'); box.classList.add('signing');
-
-      function finish() { btn.disabled = false; btn.textContent = label; }
-      function showSample() { renderReceipt(box, sampleReceipt(s), false); finish(); }
-      function showError(msg, noteText) {
-        box.classList.remove('signing'); box.classList.add('empty', 'revealed');
-        box.textContent = msg;
-        if (note) note.textContent = noteText || SAMPLE_NOTE;
-        finish();
-      }
-
-      // No live endpoint configured → sample, after a short beat for feel.
-      if (!DEMO_SIGN_URL) { setTimeout(showSample, 560); return; }
-
-      if (!attempt || attempt.amt !== s.amt || attempt.band !== band) {
-        attempt = { id: uuid(), amt: s.amt, band: band };
-      }
-
-      var ctl = new AbortController();
-      var to = setTimeout(function () { ctl.abort(); }, 25000);
-      fetch(DEMO_SIGN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: s.amt, band: band, attemptId: attempt.id }),
-        signal: ctl.signal,
-      }).then(function (resp) {
-        return resp.json().then(function (data) { return { status: resp.status, data: data }; });
-      }).then(function (res) {
-        clearTimeout(to);
-        if (res.data && res.data.ok) {
-          attempt = null;
-          renderReceipt(box, liveReceipt(res.data), true);
-          finish();
-        } else if (res.data && res.data.queued) {
-          // Accepted but not signed yet — a real sandbox sale exists, so never
-          // dress this up as a sample.
-          showError(res.data.message, 'Sandbox sale #' + res.data.purchaseId + ' · status ' + res.data.status + '.');
-        } else if (res.status === 429) {
-          showError((res.data && res.data.message) || 'The live demo is busy right now — give it a minute, then try again.');
-        } else {
-          // Reachable but didn't sign (validation, SUSPENDED, upstream): sample.
-          showSample();
-        }
-      }).catch(function () {
-        // Unreachable/timeout/CORS → graceful sample so the page never breaks.
-        clearTimeout(to);
-        showSample();
-      });
-    };
-
-    function drawQR(cv, seed) {
-      var x = cv.getContext('2d'), N = 25, q = 2, T = N + q * 2, S = cv.width, m = S / T;
-      x.fillStyle = '#FCFBF7'; x.fillRect(0, 0, S, S);
-      var g = []; for (var i = 0; i < N; i++) g.push(new Array(N).fill(false));
-      function finder(r, c) { for (var i = 0; i < 7; i++) for (var j = 0; j < 7; j++) g[r + i][c + j] = (i === 0 || i === 6 || j === 0 || j === 6) || (i >= 2 && i <= 4 && j >= 2 && j <= 4); }
-      finder(0, 0); finder(0, N - 7); finder(N - 7, 0);
-      var h = 2166136261; for (var k = 0; k < seed.length; k++) { h ^= seed.charCodeAt(k); h = (h * 16777619) >>> 0; }
-      function rnd(u, v) { var w = (h ^ ((u + 1) * 73856093) ^ ((v + 1) * 19349663)) >>> 0; w = ((w ^ (w >>> 13)) * 0x5bd1e995) >>> 0; return ((w >>> 16) & 1) === 1; }
-      function reserved(r, c) { function F(a, b) { return r >= a - 1 && r <= a + 7 && c >= b - 1 && c <= b + 7; } return F(0, 0) || F(0, N - 7) || F(N - 7, 0); }
-      for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) if (!reserved(r, c)) g[r][c] = rnd(r, c);
-      x.fillStyle = '#141414';
-      for (var R = 0; R < N; R++) for (var C = 0; C < N; C++) if (g[R][C]) x.fillRect((C + q) * m, (R + q) * m, m + 0.6, m + 0.6);
-    }
-
-    demoRecalc();
-    var initialBox = document.getElementById('demo-receipt');
-    initialBox.classList.remove('empty');
-    renderReceipt(initialBox, sampleReceipt(calc()), false);
-
-  })();
 </script>
 
 <!-- ════════════════════════════════════════
