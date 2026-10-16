@@ -1655,35 +1655,35 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
     <div class="section-head">
       <span class="eyebrow">Interactive examples</span>
       <h2>Try two fiscal workflows.</h2>
-      <p class="lead">Follow a creator sale or retail basket through the simulator. No fiscal invoice is issued or submitted to KRA.</p>
+      <p class="lead">Explore a creator sale or retail basket with a local simulation in your browser. No fiscal invoice is issued or submitted to KRA.</p>
     </div>
 
     <div class="connected-demo" id="connected-demo">
-      <p class="demo-note">Connected simulator · synthetic data only. No KRA submission, payment or remittance. Five operations per public session; access lasts 30 minutes.</p>
+      <p class="demo-note">Local simulation · synthetic data only. Runs entirely in your browser, with no API connection, fiscal signing, KRA submission, payment or remittance. Refreshing clears the examples.</p>
       <div class="demo-grid">
         <div>
           <label class="demo-label" for="connected-kind">Example</label>
           <select id="connected-kind"><option value="creator">Creator platform</option><option value="retail">Retail basket</option></select>
           <label class="demo-label" for="connected-scenario">Fiscal outcome to exercise</label>
           <select id="connected-scenario"><option value="SUCCESS">Signed simulated receipt</option><option value="HELD_BRANCH">Pending behind an uncertain invoice</option><option value="AMBIGUOUS_TIMEOUT_AFTER_SIGN">Uncertain after signing</option></select>
-          <p class="demo-note" id="connected-pending-note" hidden>The pending exercise first creates an uncertain synthetic predecessor. It uses two of the five invoice attempts.</p>
+          <p class="demo-note" id="connected-pending-note" hidden>This local illustration shows an uncertain predecessor holding the sale. Lookup then illustrates recovery after that predecessor resolves.</p>
           <div id="creator-example">
-            <p>Creator sale: KES 1,160 including sample VAT. Separately invoice a platform fee of KES 134.56 (KES 116 + 18.56 sample VAT). These demonstrate two invoice obligations. This public example uses one synthetic branch; separate creator and platform taxpayer authorisation requires invited integration testing. Buyer-issued reverse invoicing is unavailable.</p>
+            <p>Creator sale: KES 1,160 including sample VAT. Separately invoice a platform fee of KES 134.56 (KES 116 + 18.56 sample VAT). These demonstrate two invoice obligations. These local examples do not verify separate creator and platform taxpayer authorisation; that requires invited integration testing. Buyer-issued reverse invoicing is unavailable.</p>
             <label class="demo-label" for="connected-residency">Illustrative withholding category</label>
             <select id="connected-residency"><option value="resident">Resident digital content · 5%</option><option value="nonresident">Nonresident without PE · 20%</option></select>
             <p class="demo-note">Gross-receipts basis; fixture fee is 10% before fee VAT. Category, payer responsibility, residency, exemptions and fee treatment require transaction-specific assessment. Gifts remain unresolved: no gift invoice, withholding or payout is calculated.</p>
           </div>
           <div id="retail-example" hidden><p>Basket: two synthetic notebooks at KES 116 each, and one synthetic tote at KES 58. Sample standard VAT is included. Return one notebook using its original line, price and tax.</p><p class="demo-note">Fixture classifications are for the simulator. Production item registration and partial returns remain gated.</p></div>
-          <button type="button" class="btn btn-primary demo-sign" id="connected-run">Run connected example</button>
+          <button type="button" class="btn btn-primary demo-sign" id="connected-run">Run local simulation</button>
           <button type="button" class="btn btn-ghost demo-sign" id="connected-lookup" disabled>Look up original reference</button>
           <button type="button" class="btn btn-ghost demo-sign" id="connected-duplicate" disabled>Recover duplicate</button>
           <button type="button" class="btn btn-ghost demo-sign" id="connected-return" hidden disabled>Return one notebook</button>
           <button type="button" class="btn btn-ghost demo-sign" id="connected-fee" disabled>Issue separate fee invoice</button>
         </div>
         <div>
-          <p id="connected-message" role="status" aria-live="polite">Ready to connect. If the bounded simulator is unavailable, no sample will be substituted.</p>
+          <p id="connected-message" role="status" aria-live="polite">Ready to run a local simulation. No API connection is needed.</p>
           <div id="connected-results" class="demo-split" aria-live="polite"></div>
-          <p class="demo-note">SIGNED describes simulator signing, not central KRA acceptance. Pending and uncertain results retain their original reference; investigate without sending a replacement. Financial figures are estimates, not deductions, verified receipts of money or paid payouts.</p>
+          <p class="demo-note">All statuses and receipt numbers here are browser-generated illustrations. SIGNED does not establish control-unit signing or central KRA acceptance. Lookup demonstrates recovery using the original reference. Financial figures are estimates, not deductions, verified receipts of money or paid payouts.</p>
         </div>
       </div>
     </div>
