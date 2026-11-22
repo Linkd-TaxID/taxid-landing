@@ -79,6 +79,13 @@ class AccessibilityTests(unittest.TestCase):
             self.assertTrue(anchors, name)
             for anchor in anchors:
                 self.assertRegex(anchor, r"min-height:\s*44px", name)
+    def test_new_tab_links_warn_before_opening(self):
+        for name, page in {"index.html": PAGE, **INCLUDES}.items():
+            for anchor in re.findall(r"<a\b[^>]*target=\"_blank\"[^>]*>.*?</a>", page, re.S):
+                self.assertIn('<span class="sr-only"> (opens in a new tab)</span>', anchor, name + ": " + anchor)
+
+    def test_sr_only_utility_is_defined_in_the_shared_stylesheet(self):
+        self.assertRegex((ROOT / "brand.css").read_text(), r"\.sr-only\s*\{[^}]*clip:")
 
 
 if __name__ == "__main__":
