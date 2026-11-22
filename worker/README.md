@@ -17,8 +17,9 @@ The browser sends `{ amount, band, attemptId, invoiceDate }`. It mints the UUID
 `attemptId` and the Nairobi `invoiceDate` together when an attempt starts and
 resends both unchanged on every retry. The date must be today or up to 7 days
 earlier (the API's back-dating limit). The Worker computes the amount/VAT split
-and sends `clientReference: demo-<attemptId>` with an `Idempotency-Key` derived
-from the attempt, date, band and amount, so a changed body never reuses a key.
+and sends one itemised line (OSCU branches refuse a sale without items) with
+`clientReference: demo-<attemptId>` and an `Idempotency-Key` derived from the
+attempt, date, band and amount, so a changed body never reuses a key.
 A 409, 422 or 425 from the API is returned as `look_up_original` (HTTP 409,
 `retry: false`): look up the original reference instead of resending.
 
@@ -33,8 +34,9 @@ A 409, 422 or 425 from the API is returned as `look_up_original` (HTTP 409,
 | `ALLOW_LOCALHOST=1` | Development-only permission for localhost origins |
 
 `wrangler.toml` defines both limiters. Missing bindings return `not_configured`.
-Amounts are limited to KES 1–1,000,000; supported bands are A–E. Fixed rate
-values are sample defaults and require review against current classifications.
+Amounts are limited to KES 1–1,000,000. Only band B is signed, with item class
+code `5059690800` (the backend's band-B default); no class code is established
+for A, C, D or E, so those return `band_unavailable` without calling the API.
 CORS restricts browser origins but does not authenticate arbitrary HTTP clients.
 
 Local commands: `npm install`, then `npx wrangler dev`. Secret values belong in

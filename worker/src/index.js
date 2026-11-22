@@ -13,7 +13,8 @@
  * Browser contract: { amount, band, attemptId, invoiceDate }. The page mints
  * attemptId (a UUID) and invoiceDate (yyyy-MM-dd, Africa/Nairobi) together when
  * an attempt starts and resends both unchanged on every retry. The Worker
- * recomputes the VAT split, fixes supplierPin and payment type, and sends:
+ * recomputes the VAT split, fixes supplierPin and payment type, and sends one
+ * itemised line (OSCU branches refuse a sale without items with 501):
  *   clientReference  demo-<attemptId>, stable for lookup by original reference
  *   Idempotency-Key  demo-<sha256(attemptId, invoiceDate, band, amount)>, so the
  *                    key always names the exact body, invoiceDate included
@@ -42,6 +43,15 @@ const RATE_LABEL = { A: "0%", B: "16%", C: "0%", D: "0%", E: "8%" };
 // hardcoded here: a KRA PIN is identifying data and this repo is public. Set it
 // with `wrangler secret put SUPPLIER_PIN`.
 const PMT_TY_CD = "01"; // 01 = cash (KRA §4.7)
+
+// One itemised demo line per band. A band is offered only with a commodity code
+// shown valid for it: 5059690800 is the backend's own band-B default
+// (PurchaseService etims.default.item-cls-cd, MockVscuController taxTyCd "B").
+// No code is established for A, C, D or E (real VSDC master rows carry null
+// taxTyCd), so those bands are refused locally rather than guessed.
+const DEMO_ITEMS = {
+  B: { sku: "TAXID-DEMO-B", itemNm: "TaxID live demo item", itemClsCd: "5059690800" },
+};
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -185,6 +195,14 @@ export default {
     if (!(band in RATES)) {
       return json({ ok: false, error: "bad_band", message: "band must be A, B, C, D or E" }, 400, origin);
     }
+    if (!(band in DEMO_ITEMS)) {
+      return json(
+        { ok: false, error: "band_unavailable",
+          message: `The demo only signs band ${Object.keys(DEMO_ITEMS).join(", ")}: no item class code is established for band ${band}.` },
+        400,
+        origin,
+      );
+    }
     if (!Number.isFinite(amount) || amount < MIN_AMOUNT || amount > MAX_AMOUNT) {
       return json(
         { ok: false, error: "bad_amount", message: `amount must be between ${MIN_AMOUNT} and ${MAX_AMOUNT}` },
@@ -224,7 +242,7 @@ export default {
       return json({ ok: false, error: "rate_limited", scope: "global", message }, 429, origin);
     }
 
-    // Recompute the split server-side and build the middleware's flat payload.
+    // Recompute the split server-side and build an itemised single-line sale.
     const split = vatSplit(amount, band);
     const clientReference = `demo-${attemptId.toLowerCase()}`;
     const payload = {
@@ -234,8 +252,15 @@ export default {
       taxAmount: split.vat,
       invoiceDate,
       itemDescription: "TaxID live demo — sandbox receipt",
-      taxBand: band,
       pmtTyCd: PMT_TY_CD,
+      items: [{
+        ...DEMO_ITEMS[band],
+        taxTyCd: band,
+        qty: 1,
+        unitPrice: split.gross,
+        pkgUnitCd: "NT",
+        qtyUnitCd: "U",
+      }],
     };
 
     // The page keeps one attemptId and invoiceDate until the attempt resolves, so

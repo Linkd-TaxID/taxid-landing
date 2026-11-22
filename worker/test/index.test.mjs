@@ -93,3 +93,40 @@ for (const upstreamStatus of [409, 422, 425]) {
     assert.doesNotMatch(body.message, /try again/i);
   });
 }
+
+// --- P15: itemised sale ---
+
+async function callWith(body, {status = 200, payload, headers = {}}) {
+  const sent = [];
+  globalThis.fetch = async (url, init) => {
+    sent.push({url, init, payload: JSON.parse(init.body)});
+    return new Response(JSON.stringify(payload), {status, headers: {'Content-Type': 'application/json', ...headers}});
+  };
+  const response = await worker.fetch(new Request('https://worker.example/', {
+    method: 'POST', headers: {Origin: ORIGIN, 'Content-Type': 'application/json'}, body: JSON.stringify(body),
+  }), env);
+  return {status: response.status, body: await response.json(), sent};
+}
+const SIGNED = {status: 'SIGNED', cuInvoiceNumber: 'CU/1', sdcId: 'SDC', receiptSignature: 'SIG'};
+
+test('sends an itemised sale: OSCU branches answer a flat taxBand sale with 501', async () => {
+  const {sent} = await callWith(attempt({band: 'B', amount: 116}), {payload: SIGNED, headers: {'X-TaxID-Environment': 'SANDBOX'}});
+  const payload = sent[0].payload;
+  assert.equal(payload.taxBand, undefined, 'flat taxBand must not be sent');
+  assert.deepEqual(payload.items, [{
+    sku: 'TAXID-DEMO-B', itemNm: 'TaxID live demo item', itemClsCd: '5059690800',
+    taxTyCd: 'B', qty: 1, unitPrice: '116.00', pkgUnitCd: 'NT', qtyUnitCd: 'U',
+  }]);
+  assert.equal(payload.amount, '116.00');
+  assert.equal(payload.taxAmount, '16.00');
+});
+
+test('bands without an established item class code are refused before calling upstream', async () => {
+  for (const band of ['A', 'C', 'D', 'E']) {
+    const {status, body, sent} = await callWith(attempt({band}), {payload: SIGNED});
+    assert.equal(status, 400, band);
+    assert.equal(body.error, 'band_unavailable', band);
+    assert.match(body.message, /item class code/);
+    assert.equal(sent.length, 0, band);
+  }
+});
