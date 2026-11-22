@@ -1,9 +1,11 @@
 """Checks the hero API samples against the backend contract and the Python SDK.
 
 The Python sample is executed against the SDK with mocked HTTP (no network).
-Set TAXID_SDK_SRC to the SDK's ``src`` directory (for example
+CI installs the released, pinned SDK (taxid-etims==0.8.1, see pages.yml) and
+fails if it cannot be imported. Locally, either install that release or set
+TAXID_SDK_SRC to an SDK ``src`` directory (for example
 ``~/Desktop/kra-etims-sdk/src``); without an importable SDK the execution tests
-are skipped and the static checks still run.
+are skipped outside CI and the static checks still run.
 """
 import contextlib
 import datetime as dt
@@ -92,6 +94,19 @@ class StaticSampleTests(unittest.TestCase):
         for status in STATUSES:
             self.assertIn(status, python_sample())
             self.assertIn(status, curl_sample())
+
+
+class CiSdkWiringTests(unittest.TestCase):
+    """CI must execute the samples against a released, pinned SDK, not skip them."""
+
+    WORKFLOW = (ROOT / ".github" / "workflows" / "pages.yml").read_text()
+
+    def test_ci_installs_released_pinned_sdk(self):
+        self.assertRegex(self.WORKFLOW, r"pip install[^\n]*\btaxid-etims==0\.8\.1\b")
+
+    def test_ci_refuses_to_skip_sdk_execution(self):
+        if os.environ.get("CI"):
+            self.assertIsNotNone(kra_etims, "CI must not skip the SDK execution tests")
 
 
 @unittest.skipIf(kra_etims is None, "SDK not importable; set TAXID_SDK_SRC")

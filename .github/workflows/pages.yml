@@ -31,8 +31,13 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_site.py'
       - name: Test local interactive examples
         run: node --test tests/test_connected_demo.mjs
+      - name: Install the released Python SDK the samples run against
+        run: |
+          python3 -m venv "$RUNNER_TEMP/sdk"
+          "$RUNNER_TEMP/sdk/bin/python" -m pip install --disable-pip-version-check taxid-etims==0.8.1
       - name: Test page links, wording and API samples
-        run: python3 -m unittest tests/test_page_content.py tests/test_code_samples.py
+        run: |
+          "$RUNNER_TEMP/sdk/bin/python" -m unittest tests/test_page_content.py tests/test_code_samples.py
       - name: Build Jekyll site
         env:
           INPUT_TOKEN: ${{ github.token }}
