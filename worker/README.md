@@ -37,8 +37,11 @@ with the API's `code` and `message` (or ProblemDetail `detail`).
 
 `wrangler.toml` defines both limiters. Missing bindings return `not_configured`.
 Amounts are limited to KES 1–1,000,000. Only band B is signed, with item class
-code `5059690800` (the backend's band-B default); no class code is established
-for A, C, D or E, so those return `band_unavailable` without calling the API.
+code `5059690800`. Neither this code nor `10101601` (band A) is proven against
+real KRA master data; both appear only in the mock-VSCU fixture, but `5059690800`
+is also the backend's configured default (`etims.default.item-cls-cd`) used
+outside the mock. Band A's only evidence is the mock fixture, so A, C, D and E
+return `band_unavailable` without calling the API.
 CORS restricts browser origins but does not authenticate arbitrary HTTP clients.
 
 Local commands: `npm install`, then `npx wrangler dev`. Secret values belong in

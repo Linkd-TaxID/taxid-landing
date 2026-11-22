@@ -46,11 +46,12 @@ const RATE_LABEL = { A: "0%", B: "16%", C: "0%", D: "0%", E: "8%" };
 // with `wrangler secret put SUPPLIER_PIN`.
 const PMT_TY_CD = "01"; // 01 = cash (KRA §4.7)
 
-// One itemised demo line per band. A band is offered only with a commodity code
-// shown valid for it: 5059690800 is the backend's own band-B default
-// (PurchaseService etims.default.item-cls-cd, MockVscuController taxTyCd "B").
-// No code is established for A, C, D or E (real VSDC master rows carry null
-// taxTyCd), so those bands are refused locally rather than guessed.
+// One itemised demo line per band. Neither candidate code is proven against
+// real KRA master data: the mock-VSCU fixture (MockVscuController) lists both
+// 10101601 as taxTyCd "A" and 5059690800 as "B". Band B is kept because
+// 5059690800 is also the backend's configured default outside the mock
+// (PurchaseService, etims.default.item-cls-cd). Band A's only evidence is the
+// mock fixture, so A is refused locally, as are C, D and E (no code at all).
 const DEMO_ITEMS = {
   B: { sku: "TAXID-DEMO-B", itemNm: "TaxID live demo item", itemClsCd: "5059690800" },
 };
