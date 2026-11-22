@@ -199,6 +199,8 @@
     if (!sale || sale.status !== 'OUTCOME_UNKNOWN' || sale.decision) return;
     sale.decision = $('connected-resolution').value;
     $('connected-resolve').disabled = true;
+    // Keep keyboard focus on an enabled control: the next step is lookup.
+    if (typeof $('connected-lookup').focus === 'function') $('connected-lookup').focus();
     $('connected-message').textContent = 'Local operator illustration: resolution ' + sale.decision
       + ' recorded with its evidence. Look up the original reference to see the result.';
   });
