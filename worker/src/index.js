@@ -6,9 +6,10 @@
  * and it is deployed separately, only by hand (see README.md).
  *
  * Environment: the Worker signs in whichever environment SANDBOX_API_KEY is
- * bound to. It does not verify that the key is a sandbox key; the `sandbox`
- * field in its response is a label, not evidence. SIGNED means a control-unit
- * receipt, not central KRA acceptance.
+ * bound to. A SIGNED result reports `sandbox: true` only when the API's
+ * X-TaxID-Environment response header says SANDBOX; otherwise it reports
+ * `sandbox: false` with the header value (or null) in `environment`. SIGNED
+ * means a control-unit receipt, not central KRA acceptance.
  *
  * Browser contract: { amount, band, attemptId, invoiceDate }. The page mints
  * attemptId (a UUID) and invoiceDate (yyyy-MM-dd, Africa/Nairobi) together when
@@ -350,12 +351,14 @@ export default {
     }
 
     // Success: return the split we computed + the real fiscal block. Nothing
-    // here is a secret; the whole point is that these are genuine KRA-sandbox
-    // control-unit values.
+    // here is a secret. The sandbox label is evidence-based: the API names its
+    // runtime in X-TaxID-Environment (SIMULATED, SANDBOX or PRODUCTION).
+    const environment = upstream.headers.get("X-TaxID-Environment");
     return json(
       {
         ok: true,
-        sandbox: true,
+        sandbox: environment === "SANDBOX",
+        environment,
         band,
         rate: RATE_LABEL[band],
         net: split.net,

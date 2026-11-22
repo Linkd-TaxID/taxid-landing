@@ -94,7 +94,7 @@ for (const [upstreamStatus, code] of [[409, 'X'], [425, 'X'], [422, 'IDEMPOTENCY
   });
 }
 
-// --- P15: itemised sale and honest 422 handling ---
+// --- P15: itemised sale, honest 422 handling, evidenced sandbox label ---
 
 async function callWith(body, {status = 200, payload, headers = {}}) {
   const sent = [];
@@ -152,4 +152,15 @@ for (const refusal of REFUSALS) {
 test('upstream 422 IDEMPOTENCY_KEY_REUSED still means look up the original', async () => {
   const {body} = await callWith(attempt(), {status: 422, payload: {status: 'ERROR', code: 'IDEMPOTENCY_KEY_REUSED', message: 'm'}});
   assert.equal(body.error, 'look_up_original');
+});
+
+test('sandbox label follows X-TaxID-Environment instead of being hard-coded', async () => {
+  const sandbox = await callWith(attempt(), {payload: SIGNED, headers: {'X-TaxID-Environment': 'SANDBOX'}});
+  assert.equal(sandbox.body.sandbox, true);
+  for (const label of ['PRODUCTION', 'SIMULATED', undefined]) {
+    const headers = label ? {'X-TaxID-Environment': label} : {};
+    const {body} = await callWith(attempt(), {payload: SIGNED, headers});
+    assert.equal(body.sandbox, false, 'environment ' + label + ' must not be labelled sandbox');
+    assert.equal(body.environment, label ?? null);
+  }
 });

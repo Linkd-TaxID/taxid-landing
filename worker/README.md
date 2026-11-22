@@ -48,8 +48,10 @@ resolved. Rotation replaces the Worker secret and revokes the old branch key.
 
 ## Release boundary
 
-This retained relay labels successful output `sandbox: true` without verifying
-the upstream environment, and it has no lookup route of its own: the caller
+A signed result is labelled `sandbox: true` only when the API's
+`X-TaxID-Environment` response header is `SANDBOX`; otherwise `sandbox` is false
+and `environment` carries the header value (or null). The relay has no lookup
+route of its own: the caller
 must look up `clientReference` through the application. After a transport
 timeout it advises retrying the same attempt, which reuses its key and body.
 Resolve these before reactivating it: no fiscal request may be repeated with a
