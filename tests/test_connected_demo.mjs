@@ -87,20 +87,33 @@ test('retail selection changes the workflow and returns one notebook at its orig
 // Backend simulator scenarios: SandboxScenarioService.Scenario on origin/main.
 const BACKEND_SCENARIOS = ['SUCCESS', 'TERMINAL_REJECTION', 'SERVICE_UNAVAILABLE_BEFORE_SIGN', 'AMBIGUOUS_TIMEOUT_AFTER_SIGN'];
 
-test('scenario selector mirrors the backend simulator plus the labelled evidence hold', () => {
+test('scenario selector mirrors the backend simulator and labels local-only examples', () => {
   const page = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const select = page.match(/<select id="connected-scenario">(.*?)<\/select>/s)[1];
   const values = [...select.matchAll(/value="([^"]+)"/g)].map(match => match[1]);
-  assert.deepEqual(values, [...BACKEND_SCENARIOS, 'EVIDENCE_PENDING']);
+  assert.deepEqual(values, [...BACKEND_SCENARIOS, 'QUEUED_BEFORE_DISPATCH', 'EVIDENCE_PENDING']);
 });
 
 function status(app) {
   return app.output().split('\n')[1];
 }
 
-test('service unavailable before signing is recoverable: lookup finds the queued sale signed', () => {
+test('a control-unit 503 stays uncertain until an operator records an outcome', () => {
   const app = simulator();
   app.change('scenario', 'SERVICE_UNAVAILABLE_BEFORE_SIGN');
+  app.click('run');
+  assert.equal(status(app), 'OUTCOME_UNKNOWN');
+  assert.match(app.element('connected-message').textContent, /503/);
+  app.click('lookup');
+  assert.equal(status(app), 'OUTCOME_UNKNOWN');
+  assert.deepEqual(app.previews(), []);
+  assert.equal(app.element('connected-resolve').disabled, false);
+  assert.equal(app.element('connected-duplicate').disabled, true);
+});
+
+test('a sale queued before dispatch can later be found signed', () => {
+  const app = simulator();
+  app.change('scenario', 'QUEUED_BEFORE_DISPATCH');
   app.click('run');
   assert.equal(status(app), 'PENDING_SYNC');
   assert.deepEqual(app.previews(), []);
