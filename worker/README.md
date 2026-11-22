@@ -10,9 +10,17 @@ landing no longer contains its endpoint setting or calls this relay. It is not
 the invited developer workspace and is not enabled by this documentation.
 
 The Worker forwards `POST /v2/etims/sale` to `https://api.taxid.co.ke`, holding
-`SANDBOX_API_KEY` and `SUPPLIER_PIN` as server-side secret bindings. The browser
-sends `{ amount, band, attemptId }`; the Worker computes the amount/VAT split.
-The key fixes the taxpayer branch. Never place it in landing JavaScript.
+`SANDBOX_API_KEY` and `SUPPLIER_PIN` as server-side secret bindings. The key is
+sent as `Authorization: Bearer`; never place it in landing JavaScript.
+
+The browser sends `{ amount, band, attemptId, invoiceDate }`. It mints the UUID
+`attemptId` and the Nairobi `invoiceDate` together when an attempt starts and
+resends both unchanged on every retry. The date must be today or up to 7 days
+earlier (the API's back-dating limit). The Worker computes the amount/VAT split
+and sends `clientReference: demo-<attemptId>` with an `Idempotency-Key` derived
+from the attempt, date, band and amount, so a changed body never reuses a key.
+A 409, 422 or 425 from the API is returned as `look_up_original` (HTTP 409,
+`retry: false`): look up the original reference instead of resending.
 
 ## Configuration
 
@@ -37,9 +45,11 @@ resolved. Rotation replaces the Worker secret and revokes the old branch key.
 ## Release boundary
 
 This retained relay labels successful output `sandbox: true` without verifying
-the upstream environment. It also lacks original-reference lookup and advises
-retry after a transport timeout. Those behaviours must be corrected before
-reactivating it: no fiscal request may be repeated blindly after uncertainty.
+the upstream environment, and it has no lookup route of its own: the caller
+must look up `clientReference` through the application. After a transport
+timeout it advises retrying the same attempt, which reuses its key and body.
+Resolve these before reactivating it: no fiscal request may be repeated with a
+new identity after uncertainty.
 Do not treat its label as evidence of KRA sandbox submission or central acceptance.
 
 Use the invited simulator workspace for the maintained submit, lookup and recovery

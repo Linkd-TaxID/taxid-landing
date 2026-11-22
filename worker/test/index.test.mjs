@@ -1,0 +1,95 @@
+// Run with: node --test worker/test/
+import assert from 'node:assert/strict';
+import {registerHooks} from 'node:module';
+import test from 'node:test';
+
+// The Workers runtime module is unavailable in Node; stub the one export used.
+registerHooks({
+  resolve(specifier, context, next) {
+    if (specifier === 'cloudflare:workers') {
+      return {shortCircuit: true, url: 'data:text/javascript,export class DurableObject { constructor(ctx, env) { this.ctx = ctx; this.env = env; } }'};
+    }
+    return next(specifier, context);
+  },
+});
+const {default: worker} = await import('../src/index.js');
+
+const ORIGIN = 'https://taxid.co.ke';
+const ATTEMPT = '0f8fad5b-d9cb-469f-a165-70867728950e';
+const env = {
+  SANDBOX_API_KEY: 'synthetic-key',
+  SUPPLIER_PIN: 'A000123456B',
+  IP_LIMITER: {limit: async () => ({success: true})},
+  DAILY_CAP: {idFromName: name => name, get: () => ({take: async () => true})},
+};
+
+function nairobiToday(offsetDays = 0) {
+  return new Date(Date.now() + 3 * 3600 * 1000 + offsetDays * 86400000).toISOString().slice(0, 10);
+}
+
+async function call(body, upstream = {status: 200, body: {status: 'SIGNED', cuInvoiceNumber: 'CU/1', sdcId: 'SDC', receiptSignature: 'SIG'}}) {
+  const sent = [];
+  globalThis.fetch = async (url, init) => {
+    sent.push({url, init, payload: JSON.parse(init.body)});
+    return new Response(JSON.stringify(upstream.body), {status: upstream.status, headers: {'Content-Type': 'application/json'}});
+  };
+  const response = await worker.fetch(new Request('https://worker.example/', {
+    method: 'POST', headers: {Origin: ORIGIN, 'Content-Type': 'application/json'}, body: JSON.stringify(body),
+  }), env);
+  return {status: response.status, body: await response.json(), sent};
+}
+
+const attempt = (extra = {}) => ({amount: 116, band: 'B', attemptId: ATTEMPT, invoiceDate: nairobiToday(), ...extra});
+
+test('uses the current Bearer and Idempotency-Key headers', async () => {
+  const {sent} = await call(attempt());
+  const headers = new Headers(sent[0].init.headers);
+  assert.equal(headers.get('Authorization'), 'Bearer synthetic-key');
+  assert.match(headers.get('Idempotency-Key'), /^demo-[0-9a-f]{64}$/);
+  assert.equal(headers.get('X-API-Key'), null);
+  assert.equal(headers.get('X-TIaaS-Idempotency-Key'), null);
+});
+
+test('sends a stable clientReference derived from the attempt', async () => {
+  const {sent, body} = await call(attempt());
+  assert.equal(sent[0].payload.clientReference, 'demo-' + ATTEMPT);
+  assert.equal(body.clientReference, 'demo-' + ATTEMPT);
+});
+
+test('sends the attempt invoiceDate instead of recomputing it', async () => {
+  const yesterday = nairobiToday(-1);
+  const {sent} = await call(attempt({invoiceDate: yesterday}));
+  assert.equal(sent[0].payload.invoiceDate, yesterday);
+});
+
+test('the idempotency key covers the full identity, including invoiceDate', async () => {
+  const today = (await call(attempt())).sent[0];
+  const again = (await call(attempt())).sent[0];
+  const yesterday = (await call(attempt({invoiceDate: nairobiToday(-1)}))).sent[0];
+  const key = sent => new Headers(sent.init.headers).get('Idempotency-Key');
+  assert.equal(key(today), key(again));
+  assert.notEqual(key(today), key(yesterday));
+  assert.equal(today.payload.clientReference, yesterday.payload.clientReference);
+});
+
+test('rejects attempts without a fixed identity before calling upstream', async () => {
+  for (const body of [attempt({attemptId: undefined}), attempt({attemptId: 'not-a-uuid'}),
+    attempt({invoiceDate: undefined}), attempt({invoiceDate: '2026-13-01'}),
+    attempt({invoiceDate: nairobiToday(-8)}), attempt({invoiceDate: nairobiToday(2)})]) {
+    const {status, sent} = await call(body);
+    assert.equal(status, 400, JSON.stringify(body));
+    assert.equal(sent.length, 0);
+  }
+});
+
+for (const upstreamStatus of [409, 422, 425]) {
+  test('upstream ' + upstreamStatus + ' means look up the original, not retry', async () => {
+    const {status, body} = await call(attempt(), {status: upstreamStatus, body: {status: upstreamStatus, code: 'X', message: 'm'}});
+    assert.equal(status, 409);
+    assert.equal(body.error, 'look_up_original');
+    assert.equal(body.retry, false);
+    assert.equal(body.clientReference, 'demo-' + ATTEMPT);
+    assert.equal(body.upstreamStatus, upstreamStatus);
+    assert.doesNotMatch(body.message, /try again/i);
+  });
+}
