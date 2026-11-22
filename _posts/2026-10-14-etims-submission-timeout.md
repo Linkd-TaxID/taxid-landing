@@ -3,7 +3,7 @@ title: "What to do when an eTIMS submission times out"
 description: "A timeout doesn't tell you whether the invoice was signed. Look up the original reference before you submit again."
 category: Recovery
 author: TaxID
-# last_modified_at: 2026-11-01   # uncomment when you revise this post
+last_modified_at: 2026-11-22
 faq:
   - q: "What happens after a timeout or outage?"
     a: "Eligible queued work can retry after recovery. If signing may already have happened, TaxID stops automatic replay so the original request can be investigated."
@@ -36,7 +36,7 @@ Store the reference with the invoice in your own database before you send the re
 ## The recovery flow
 
 1. **The submission times out.** Keep the original reference.
-2. **Look up that reference.** Retrieve receipt fields and status for the same sale. The lookup endpoint is in the [docs](https://docs.taxid.co.ke).
+2. **Look up that reference.** Retrieve receipt fields and status for the same sale. The lookup endpoint, `GET /v2/etims/sales/search?clientReference=…`, is in the [API reference](https://api.taxid.co.ke/swagger-ui/index.html).
 3. **Reuse what you find.** If lookup returns a stored `SIGNED` receipt, use its fields without submitting another sale. If the outcome is still uncertain, investigate before resubmitting.
 
 ## What happens after a timeout or outage?
