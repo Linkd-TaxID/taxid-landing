@@ -1382,55 +1382,87 @@
           <div class="win-body">
             <p class="demo-note">Server-side API-key authentication. Use your assigned API URL and branch PIN. No client ID or client secret is required.</p>
             <div id="pane-py" class="code-pane on">
-<p class="request-context">With your client configured and invoice mapped:</p>
-<pre tabindex="0" role="region" aria-label="Python request example"><span class="cm"># invoice: your mapped SaleInvoice</span>
-receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn">submit_sale</span><span class="pu">(</span>
-    invoice<span class="pu">,</span>
-    idempotency_key<span class="op">=</span><span class="st">"INV-2026-001"</span><span class="pu">,</span>
-<span class="pu">)</span>
-<span class="fn">print</span><span class="pu">(</span>receipt<span class="pu">[</span><span class="st">"cuInvoiceNumber"</span><span class="pu">])</span></pre>
+<p class="request-context">With your client configured and invoice mapped. The invoice date must be today or within the last 7 days, never in the future.</p>
+<pre tabindex="0" role="region" aria-label="Python request example"><span class="cm"># invoice: your mapped, itemised SaleInvoice</span>
+receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn">submit_sale</span><span class="pu">(</span>invoice<span class="pu">,</span> idempotency_key<span class="op">=</span><span class="st">"INV-2026-001"</span><span class="pu">)</span>
+<span class="fn">print</span><span class="pu">(</span>receipt<span class="pu">[</span><span class="st">"status"</span><span class="pu">])</span>  <span class="cm"># branch on status: see Complete request</span></pre>
 <details class="request-details"><summary>Complete request</summary>
 <pre tabindex="0" role="region" aria-label="Python complete request example"><span class="kw">import</span> os
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
 <span class="kw">from</span> <span class="cl">kra_etims</span> <span class="kw">import</span> <span class="cl">KRAeTIMSClient</span><span class="pu">,</span> <span class="cl">SaleInvoice</span><span class="pu">,</span> <span class="fn">calculate_item</span><span class="pu">,</span> <span class="fn">build_invoice_totals</span>
 
 client <span class="op">=</span> <span class="cl">KRAeTIMSClient</span><span class="pu">(</span>
     api_key<span class="op">=</span>os.environ[<span class="st">"TAXID_API_KEY"</span>],
     base_url<span class="op">=</span>os.environ[<span class="st">"TAXID_API_URL"</span>]<span class="pu">)</span>
 
-items <span class="op">=</span> <span class="pu">[</span><span class="fn">calculate_item</span><span class="pu">(</span><span class="st">"Synthetic service invoice"</span><span class="pu">,</span> <span class="st">"SRV-001"</span><span class="pu">,</span> <span class="nm">5800</span><span class="pu">,</span> <span class="st">"B"</span><span class="pu">)]</span>  <span class="cm"># Band B = 16% VAT</span>
-receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn">submit_sale</span><span class="pu">(</span>
-    <span class="cl">SaleInvoice</span><span class="pu">(</span>tin<span class="op">=</span><span class="st">"A000123456B"</span><span class="pu">,</span> bhfId<span class="op">=</span><span class="st">"00"</span><span class="pu">,</span> invcNo<span class="op">=</span><span class="st">"INV-2026-001"</span><span class="pu">,</span>
-                custNm<span class="op">=</span><span class="st">"Acacia Enterprises Ltd"</span><span class="pu">,</span> confirmDt<span class="op">=</span><span class="st">"20260311120000"</span><span class="pu">,</span>
-                itemList<span class="op">=</span>items<span class="pu">,</span> <span class="op">**</span><span class="fn">build_invoice_totals</span><span class="pu">(</span>items<span class="pu">)),</span>
-    idempotency_key<span class="op">=</span><span class="st">"INV-2026-001"</span><span class="pu">,</span>
-<span class="pu">)</span>
-<span class="fn">print</span><span class="pu">(</span>receipt<span class="pu">[</span><span class="st">"cuInvoiceNumber"</span><span class="pu">])</span>       <span class="cm"># SIMULATED-CU/152 NS</span></pre>
+<span class="cm"># Itemised basket: every line carries a KRA commodity code (itemClsCd).</span>
+notebook <span class="op">=</span> <span class="fn">calculate_item</span><span class="pu">(</span><span class="st">"Synthetic notebook"</span><span class="pu">,</span> <span class="st">"NOTEBOOK-A5"</span><span class="pu">,</span> <span class="nm">116</span><span class="pu">,</span> <span class="st">"B"</span><span class="pu">,</span> qty<span class="op">=</span><span class="nm">2</span><span class="pu">)</span>  <span class="cm"># Band B = 16% VAT</span>
+tote <span class="op">=</span> <span class="fn">calculate_item</span><span class="pu">(</span><span class="st">"Synthetic tote"</span><span class="pu">,</span> <span class="st">"TOTE-01"</span><span class="pu">,</span> <span class="nm">58</span><span class="pu">,</span> <span class="st">"B"</span><span class="pu">)</span>
+<span class="kw">for</span> line <span class="kw">in</span> <span class="pu">(</span>notebook<span class="pu">,</span> tote<span class="pu">):</span>
+    line<span class="pu">.</span>itemClsCd <span class="op">=</span> <span class="st">"5059690800"</span>  <span class="cm"># simulator fixture; use your item's own code</span>
+items <span class="op">=</span> <span class="pu">[</span>notebook<span class="pu">,</span> tote<span class="pu">]</span>
+
+invoice <span class="op">=</span> <span class="cl">SaleInvoice</span><span class="pu">(</span>tin<span class="op">=</span><span class="st">"A000123456B"</span><span class="pu">,</span> bhfId<span class="op">=</span><span class="st">"00"</span><span class="pu">,</span> invcNo<span class="op">=</span><span class="st">"INV-2026-001"</span><span class="pu">,</span>
+    confirmDt<span class="op">=</span>datetime<span class="pu">.</span><span class="fn">now</span><span class="pu">().</span><span class="fn">strftime</span><span class="pu">(</span><span class="st">"%Y%m%d%H%M%S"</span><span class="pu">),</span>  <span class="cm"># today; at most 7 days old</span>
+    itemList<span class="op">=</span>items<span class="pu">,</span> <span class="op">**</span><span class="fn">build_invoice_totals</span><span class="pu">(</span>items<span class="pu">))</span>
+<span class="cm"># Store the invoice and its reference before sending. After a timeout, look it up:</span>
+<span class="cm"># client.find_sale(client_reference="INV-2026-001"). Never send a replacement.</span>
+receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn">submit_sale</span><span class="pu">(</span>invoice<span class="pu">,</span> idempotency_key<span class="op">=</span><span class="st">"INV-2026-001"</span><span class="pu">)</span>
+
+status <span class="op">=</span> receipt<span class="pu">[</span><span class="st">"status"</span><span class="pu">]</span>
+<span class="kw">if</span> status <span class="op">==</span> <span class="st">"SIGNED"</span><span class="pu">:</span>
+    <span class="fn">print</span><span class="pu">(</span>receipt<span class="pu">[</span><span class="st">"cuInvoiceNumber"</span><span class="pu">])</span>  <span class="cm"># SIMULATED-CU/152 NS</span>
+<span class="kw">elif</span> status <span class="op">==</span> <span class="st">"PENDING_SYNC"</span><span class="pu">:</span>  <span class="cm"># queued before dispatch; signs later</span>
+    <span class="fn">print</span><span class="pu">(</span><span class="st">"Queued. Check get_sale_status(%d) later."</span> <span class="op">%</span> receipt<span class="pu">[</span><span class="st">"purchaseId"</span><span class="pu">])</span>
+<span class="kw">elif</span> status <span class="kw">in</span> <span class="pu">(</span><span class="st">"OUTCOME_UNKNOWN"</span><span class="pu">,</span> <span class="st">"RECONCILIATION_REQUIRED"</span><span class="pu">):</span>
+    <span class="fn">print</span><span class="pu">(</span><span class="st">"Uncertain. Don't resubmit; an operator resolves INV-2026-001."</span><span class="pu">)</span>
+<span class="kw">else</span><span class="pu">:</span>  <span class="cm"># NOT_SENT or FAILED</span>
+    <span class="fn">print</span><span class="pu">(</span><span class="st">"Not signed (%s). Check the reason before correcting."</span> <span class="op">%</span> status<span class="pu">)</span></pre>
 </details>
             </div>
 
             <div id="pane-curl" class="code-pane">
-<p class="request-context">With your mapped invoice saved as invoice.json:</p>
+<p class="request-context">With your mapped invoice saved as invoice.json. The invoice date must be today or within the last 7 days, never in the future.</p>
 <pre tabindex="0" role="region" aria-label="cURL request example"><span class="fn">curl</span> <span class="st">"$TAXID_API_URL/v2/etims/sale"</span> \
   <span class="op">-H</span> <span class="st">"Authorization: Bearer $TAXID_API_KEY"</span> \
   <span class="op">-H</span> <span class="st">"Idempotency-Key: INV-2026-001"</span> \
   <span class="op">-H</span> <span class="st">"Content-Type: application/json"</span> \
   <span class="op">--data</span> <span class="st">@invoice.json</span></pre>
 <details class="request-details"><summary>Complete request</summary>
-<pre tabindex="0" role="region" aria-label="cURL complete request example"><span class="fn">curl</span> <span class="op">-X</span> POST <span class="st">"$TAXID_API_URL/v2/etims/sale"</span> \
+<pre tabindex="0" role="region" aria-label="cURL complete request example"><span class="cm"># Write the invoice once, dated today. Keep this exact file with its reference.</span>
+<span class="fn">cat</span> <span class="op">&gt;</span> invoice.json <span class="op">&lt;&lt;JSON</span>
+<span class="st">{
+  "supplierPin":     "A000123456B",
+  "clientReference": "INV-2026-001",
+  "invoiceDate":     "$(date +%F)",
+  "amount":          290.00,
+  "taxAmount":       40.00,
+  "pmtTyCd":         "01",
+  "itemDescription": "Synthetic notebook, Synthetic tote",
+  "items": [
+    {"sku": "NOTEBOOK-A5", "itemNm": "Synthetic notebook", "itemClsCd": "5059690800",
+     "taxTyCd": "B", "qty": 2, "unitPrice": 116.00, "pkgUnitCd": "NT", "qtyUnitCd": "U"},
+    {"sku": "TOTE-01", "itemNm": "Synthetic tote", "itemClsCd": "5059690800",
+     "taxTyCd": "B", "qty": 1, "unitPrice": 58.00, "pkgUnitCd": "NT", "qtyUnitCd": "U"}
+  ]
+}</span>
+<span class="op">JSON</span>
+
+<span class="fn">curl</span> <span class="op">-sS</span> <span class="st">"$TAXID_API_URL/v2/etims/sale"</span> \
   <span class="op">-H</span> <span class="st">"Authorization: Bearer $TAXID_API_KEY"</span> \
   <span class="op">-H</span> <span class="st">"Idempotency-Key: INV-2026-001"</span> \
   <span class="op">-H</span> <span class="st">"Content-Type: application/json"</span> \
-  <span class="op">-d</span> <span class="st">'{
-    "supplierPin":     "A000123456B",
-    "amount":          5800.00,
-    "invoiceDate":     "2026-10-07",
-    "clientReference": "INV-2026-001",
-    "taxBand":         "B",
-    "taxAmount":       800.00,
-    "buyerPin":        "P051234567X",
-    "buyerName":       "Acacia Enterprises Ltd",
-    "itemDescription": "Synthetic service invoice"
-  }'</span></pre>
+  <span class="op">--data</span> <span class="st">@invoice.json</span>
+
+<span class="cm"># Branch on "status":
+#   SIGNED                    use cuInvoiceNumber, sdcId and receiptSignature
+#   PENDING_SYNC              queued; poll /v2/etims/sales/{purchaseId}/status
+#   OUTCOME_UNKNOWN or
+#   RECONCILIATION_REQUIRED   don't resubmit; an operator resolves it
+#   NOT_SENT or FAILED        not signed; check failureReason before correcting
+# After a timeout, look up the original instead of sending again:
+#   curl "$TAXID_API_URL/v2/etims/sales/search?clientReference=INV-2026-001" \
+#     -H "Authorization: Bearer $TAXID_API_KEY"</span></pre>
 </details>
             </div>
           </div>
@@ -1442,9 +1474,16 @@ receipt <span class="op">=</span> client<span class="pu">.</span><span class="fn
             </div>
 <pre tabindex="0" role="region" aria-label="Illustrative API response" style="font-family:var(--mono);font-size:var(--fs-sm);line-height:1.7"><span class="pu">{</span>
   <span class="st">"purchaseId"</span><span class="pu">:</span> <span class="nm">152</span><span class="pu">,</span>
+  <span class="st">"clientReference"</span><span class="pu">:</span> <span class="st">"INV-2026-001"</span><span class="pu">,</span>
+  <span class="st">"requestId"</span><span class="pu">:</span> <span class="st">"3f6c2a9e-5d1b-4c7a-9e2f-0b8d4a6c1e75"</span><span class="pu">,</span>
   <span class="st">"status"</span><span class="pu">:</span> <span class="st">"SIGNED"</span><span class="pu">,</span>
-  <span class="st">"cuInvoiceNumber"</span><span class="pu">:</span>
-    <span class="st">"SIMULATED-CU/152 NS"</span>
+  <span class="st">"type"</span><span class="pu">:</span> <span class="st">"SALE"</span><span class="pu">,</span>
+  <span class="st">"supplier"</span><span class="pu">:</span> <span class="st">"Registered taxpayer A000123456B (self)"</span><span class="pu">,</span>
+  <span class="st">"cuInvoiceNumber"</span><span class="pu">:</span> <span class="st">"SIMULATED-CU/152 NS"</span><span class="pu">,</span>
+  <span class="st">"sdcId"</span><span class="pu">:</span> <span class="st">"SIMULATED-SDC-ID"</span><span class="pu">,</span>
+  <span class="st">"receiptSignature"</span><span class="pu">:</span> <span class="st">"SIMULATED-RECEIPT-SIGNATURE"</span><span class="pu">,</span>
+  <span class="st">"kraQrPayload"</span><span class="pu">:</span> <span class="st">"SIMULATED-QR-PAYLOAD"</span><span class="pu">,</span>
+  <span class="st">"vscuTimestamp"</span><span class="pu">:</span> <span class="st">"SIMULATED-TIMESTAMP"</span>
 <span class="pu">}</span></pre>
           </div>
         </div>
