@@ -1,4 +1,4 @@
-// Run with: node --test worker/test/
+// Run with: npm test (from worker/)
 import assert from 'node:assert/strict';
 import {registerHooks} from 'node:module';
 import test from 'node:test';
