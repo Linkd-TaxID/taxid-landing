@@ -18,8 +18,9 @@
  *   clientReference  demo-<attemptId>, stable for lookup by original reference
  *   Idempotency-Key  demo-<sha256(attemptId, invoiceDate, band, amount)>, so the
  *                    key always names the exact body, invoiceDate included
- * 409, 422 and 425 from the API mean the original attempt exists, is in
- * flight, or conflicts: the page must look up clientReference, not retry.
+ * 409, 425 and 422 IDEMPOTENCY_KEY_REUSED from the API mean the original attempt
+ * exists, is in flight, or conflicts: the page must look up clientReference, not
+ * retry. Every other 422 is a refusal (nothing was signed) and maps to not_signed.
  *
  * Secrets / bindings (see wrangler.toml + README):
  *   SANDBOX_API_KEY  (secret)          — branch API key, sent as Authorization: Bearer
@@ -58,7 +59,10 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // Mirrors PurchaseService.validateInvoiceDate (etims.invoice.max-backdate-days=7).
 const MAX_BACKDATE_DAYS = 7;
 // The original attempt exists, conflicts or is still in flight: look it up.
-const LOOK_UP_STATUSES = new Set([409, 422, 425]);
+// Other 422s (terminal VSCU/OSCU rejection, unknown item class, failed
+// precondition) are refusals of this attempt, not evidence of an original.
+const LOOK_UP_STATUSES = new Set([409, 425]);
+const LOOK_UP_422_CODES = new Set(["IDEMPOTENCY_KEY_REUSED"]);
 
 // Accepted by the middleware but not (yet) signed. PENDING_SYNC is queued and
 // will sign on replay; the other two are ambiguous and held for reconciliation.
@@ -305,7 +309,8 @@ export default {
       return json({ ok: false, error: "upstream_bad_response" }, 502, origin);
     }
 
-    if (LOOK_UP_STATUSES.has(upstream.status)) {
+    if (LOOK_UP_STATUSES.has(upstream.status)
+        || (upstream.status === 422 && LOOK_UP_422_CODES.has(data.code))) {
       return json(
         {
           ok: false,
@@ -336,7 +341,8 @@ export default {
           ok: false,
           error: "not_signed",
           upstreamStatus: upstream.status,
-          message: data.message || "The signing service did not return a signed receipt.",
+          code: data.code,
+          message: data.message || data.detail || "The signing service did not return a signed receipt.",
         },
         502,
         origin,

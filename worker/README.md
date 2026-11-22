@@ -20,8 +20,10 @@ earlier (the API's back-dating limit). The Worker computes the amount/VAT split
 and sends one itemised line (OSCU branches refuse a sale without items) with
 `clientReference: demo-<attemptId>` and an `Idempotency-Key` derived from the
 attempt, date, band and amount, so a changed body never reuses a key.
-A 409, 422 or 425 from the API is returned as `look_up_original` (HTTP 409,
-`retry: false`): look up the original reference instead of resending.
+A 409, a 425 or a 422 `IDEMPOTENCY_KEY_REUSED` from the API is returned as
+`look_up_original` (HTTP 409, `retry: false`): look up the original reference
+instead of resending. Any other 422 is a refusal and is returned as `not_signed`
+with the API's `code` and `message` (or ProblemDetail `detail`).
 
 ## Configuration
 
