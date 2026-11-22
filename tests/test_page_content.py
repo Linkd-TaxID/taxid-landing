@@ -39,5 +39,18 @@ class LinkTests(unittest.TestCase):
                     self.assertIn(API_REFERENCE, line, name)
 
 
+class WordingTests(unittest.TestCase):
+    def test_og_card_source_is_not_indexed(self):
+        og = (ROOT / "og.html").read_text()
+        self.assertRegex(og, r'<meta name="robots" content="noindex[^"]*"\s*/?>')
+
+    def test_demo_footnote_agrees_with_the_faq_about_signed(self):
+        faq = "SIGNED records the control-unit signing outcome; it does not establish central KRA acceptance."
+        self.assertIn(faq, PAGE)
+        footnote = re.search(r'<div id="connected-receipts"></div>\s*<p class="demo-note">(.*?)</p>', PAGE, re.S).group(1)
+        self.assertNotIn("does not establish control-unit signing", footnote)
+        self.assertIn("records the control-unit signing outcome", footnote)
+
+
 if __name__ == "__main__":
     unittest.main()
