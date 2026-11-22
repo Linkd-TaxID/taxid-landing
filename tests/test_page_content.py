@@ -64,5 +64,22 @@ class PrivacyNoticeTests(unittest.TestCase):
         self.assertEqual(self.NOTICE, text)
 
 
+class AccessibilityTests(unittest.TestCase):
+    """Measured in headless Chrome, these rendered 41px (demo), 36px (tabs) and 40px (nav CTA)."""
+
+    def test_demo_buttons_and_tabs_reserve_a_44px_target(self):
+        for selector in (r"\.demo-sign", r"\.wtab"):
+            rules = re.findall(selector + r"\s*\{([^}]*)\}", PAGE)
+            heights = [int(v) for rule in rules for v in re.findall(r"min-height:\s*(\d+)px", rule)]
+            self.assertTrue(heights and max(heights) >= 44, selector + " needs min-height >= 44px")
+
+    def test_nav_cta_reserves_a_44px_target(self):
+        for name, page in {"index.html": PAGE, "nav.html": INCLUDES["nav.html"]}.items():
+            anchors = re.findall(r'<a\b[^>]*href="/?#waitlist"[^>]*class="btn btn-primary"[^>]*style="[^"]*"[^>]*>', page)
+            self.assertTrue(anchors, name)
+            for anchor in anchors:
+                self.assertRegex(anchor, r"min-height:\s*44px", name)
+
+
 if __name__ == "__main__":
     unittest.main()
