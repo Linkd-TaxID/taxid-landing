@@ -84,28 +84,94 @@ test('retail selection changes the workflow and returns one notebook at its orig
   assert.match(app.previews()[1], /Net\nKES 100.00\nSample VAT\nKES 16.00\nCredit amount\nKES 116.00/);
 });
 
-for (const scenario of ['AMBIGUOUS_TIMEOUT_AFTER_SIGN', 'HELD_BRANCH']) {
-  test(scenario + ' illustrates lookup recovery without a replacement reference', () => {
-    const app = simulator();
-    app.change('scenario', scenario);
-    assert.equal(app.element('connected-pending-note').hidden, scenario !== 'HELD_BRANCH');
-    app.click('run');
-    assert.match(app.output(), scenario === 'HELD_BRANCH' ? /PENDING_SYNC/ : /OUTCOME_UNKNOWN/);
+// Backend simulator scenarios: SandboxScenarioService.Scenario on origin/main.
+const BACKEND_SCENARIOS = ['SUCCESS', 'TERMINAL_REJECTION', 'SERVICE_UNAVAILABLE_BEFORE_SIGN', 'AMBIGUOUS_TIMEOUT_AFTER_SIGN'];
+
+test('scenario selector mirrors the backend simulator plus the labelled evidence hold', () => {
+  const page = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const select = page.match(/<select id="connected-scenario">(.*?)<\/select>/s)[1];
+  const values = [...select.matchAll(/value="([^"]+)"/g)].map(match => match[1]);
+  assert.deepEqual(values, [...BACKEND_SCENARIOS, 'EVIDENCE_PENDING']);
+});
+
+function status(app) {
+  return app.output().split('\n')[1];
+}
+
+test('service unavailable before signing is recoverable: lookup finds the queued sale signed', () => {
+  const app = simulator();
+  app.change('scenario', 'SERVICE_UNAVAILABLE_BEFORE_SIGN');
+  app.click('run');
+  assert.equal(status(app), 'PENDING_SYNC');
+  assert.deepEqual(app.previews(), []);
+  app.click('lookup');
+  assert.equal(status(app), 'SIGNED');
+  assert.match(app.output(), /DEMO-0001-RECEIPT/);
+  assert.doesNotMatch(app.output(), /DEMO-0002/);
+  assert.equal(app.previews().length, 1);
+  assert.equal(app.element('connected-duplicate').disabled, false);
+});
+
+test('terminal rejection stays FAILED on lookup and never shows a receipt', () => {
+  const app = simulator();
+  app.change('scenario', 'TERMINAL_REJECTION');
+  app.click('run');
+  assert.equal(status(app), 'FAILED');
+  app.click('lookup');
+  assert.equal(status(app), 'FAILED');
+  assert.deepEqual(app.previews(), []);
+  assert.equal(app.element('connected-duplicate').disabled, true);
+  assert.equal(app.element('connected-resolve').hidden, true);
+});
+
+test('an uncertain outcome stays uncertain on lookup until an operator resolves it', () => {
+  const app = simulator();
+  app.change('scenario', 'AMBIGUOUS_TIMEOUT_AFTER_SIGN');
+  app.click('run');
+  assert.equal(status(app), 'OUTCOME_UNKNOWN');
+  for (let attempt = 0; attempt < 3; attempt++) {
+    app.click('lookup');
+    assert.equal(status(app), 'OUTCOME_UNKNOWN');
     assert.deepEqual(app.previews(), []);
     assert.equal(app.element('connected-duplicate').disabled, true);
     assert.equal(app.element('connected-fee').disabled, true);
-    assert.equal(app.element('connected-lookup').disabled, false);
+  }
+  assert.match(app.element('connected-message').textContent, /operator/i);
+  assert.equal(app.element('connected-resolve').hidden, false);
+  assert.equal(app.element('connected-resolve').disabled, false);
+});
+
+for (const [resolution, expected] of [['SIGNED', 'SIGNED'], ['NOT_SENT', 'NOT_SENT'], ['REJECTED', 'FAILED']]) {
+  test('operator resolution ' + resolution + ' is what a later lookup reports', () => {
+    const app = simulator();
+    app.change('scenario', 'AMBIGUOUS_TIMEOUT_AFTER_SIGN');
+    app.click('run');
+    app.element('connected-resolution').value = resolution;
+    app.click('resolve');
+    assert.equal(app.element('connected-resolve').disabled, true);
     app.click('lookup');
-    assert.match(app.output(), /Original lookup · same reference/);
-    assert.match(app.output(), /SIGNED/);
-    assert.match(app.output(), /DEMO-0001-RECEIPT/);
+    assert.equal(status(app), expected);
+    assert.equal(app.previews().length, expected === 'SIGNED' ? 1 : 0);
     assert.doesNotMatch(app.output(), /DEMO-0002/);
-    assert.match(app.element('connected-message').textContent, /Local recovery illustration/);
-    assert.equal(app.element('connected-duplicate').disabled, false);
-    assert.equal(app.previews().length, 1);
-    assert.match(app.previews()[0], /CU invoice no.\nDEMO-0001-RECEIPT/);
+    assert.equal(app.element('connected-duplicate').disabled, expected !== 'SIGNED');
   });
 }
+
+test('an evidence hold resolves to SIGNED on a later lookup, not the first', () => {
+  const app = simulator();
+  app.change('scenario', 'EVIDENCE_PENDING');
+  app.click('run');
+  assert.equal(status(app), 'RECONCILIATION_REQUIRED');
+  assert.match(app.output(), /EVIDENCE_PENDING/);
+  assert.equal(app.element('connected-resolve').hidden, true);
+  app.click('lookup');
+  assert.equal(status(app), 'RECONCILIATION_REQUIRED');
+  assert.deepEqual(app.previews(), []);
+  app.click('lookup');
+  assert.equal(status(app), 'SIGNED');
+  assert.match(app.output(), /DEMO-0001-RECEIPT/);
+  assert.equal(app.previews().length, 1);
+});
 
 test('changing residency clears stale figures and produces the selected withholding estimate', () => {
   const app = simulator();
@@ -123,7 +189,7 @@ test('changing residency clears stale figures and produces the selected withhold
 
 test('changing workflow or outcome clears old results and disables actions until run', () => {
   const app = simulator();
-  for (const [selection, value] of [['kind', 'retail'], ['scenario', 'HELD_BRANCH']]) {
+  for (const [selection, value] of [['kind', 'retail'], ['scenario', 'AMBIGUOUS_TIMEOUT_AFTER_SIGN']]) {
     app.click('run');
     app.change(selection, value);
     assert.equal(app.output(), '');
@@ -132,5 +198,6 @@ test('changing workflow or outcome clears old results and disables actions until
     assert.equal(app.element('connected-duplicate').disabled, true);
     assert.equal(app.element('connected-return').disabled, true);
     assert.equal(app.element('connected-fee').disabled, true);
+    assert.equal(app.element('connected-resolve').hidden, true);
   }
 });

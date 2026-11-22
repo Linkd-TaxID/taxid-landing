@@ -9,14 +9,19 @@ Source for [taxid.co.ke](https://taxid.co.ke), served by GitHub Pages.
 ## Interactive examples
 
 The creator and retail examples run entirely in the browser using synthetic
-fixtures in `connected-demo.js`. They make no API requests. The controls
-illustrate successful, pending and uncertain outcomes, recovery using the same
-reference, duplicate recovery, a separate platform fee and a partial return.
+fixtures in `connected-demo.js`. They make no API requests. The outcome list
+mirrors the backend simulator's scenarios (`SandboxScenarioService.Scenario`:
+success, terminal rejection, unavailable before signing, timeout after signing)
+plus a labelled evidence hold. The controls also show duplicate recovery, a
+separate platform fee and a partial return.
 Changing a selection clears the old result; refreshing clears all sample state.
 Each signed result includes a “See a sample receipt” disclosure with that
 example's items, reference and net/VAT/total figures. Fees and returns have
-separate previews. Uncertain and pending results show a preview after lookup
-illustrates recovery. Control-unit fields are labelled placeholders; the
+separate previews. Lookup changes only recoverable states: a queued sale
+(`PENDING_SYNC`) is signed on the next lookup, and an evidence hold
+(`RECONCILIATION_REQUIRED` / `EVIDENCE_PENDING`) on a later one. An uncertain
+outcome stays `OUTCOME_UNKNOWN` until an operator resolution (SIGNED, NOT_SENT
+or REJECTED, reported as FAILED) is recorded. Control-unit fields are labelled placeholders; the
 previews contain no verification QR. These replace the standalone receipt
 calculator.
 Receipt numbers and recovery transitions are illustrations, not evidence of
