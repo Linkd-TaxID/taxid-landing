@@ -52,5 +52,17 @@ class WordingTests(unittest.TestCase):
         self.assertIn("records the control-unit signing outcome", footnote)
 
 
+class PrivacyNoticeTests(unittest.TestCase):
+    NOTICE = ("We use these details only to reply about developer access. Your request is sent through "
+              "FormSubmit (formsubmit.co), a third-party form service, which emails it to TaxID. Don't include "
+              "API keys, KRA PINs, passwords or customer data. To have your request deleted, email "
+              "support@taxid.co.ke. No spam, and no sales call unless you ask for one.")
+
+    def test_access_form_shows_the_approved_privacy_notice(self):
+        fine = re.search(r'<p class="form-fine">(.*?)</p>', PAGE, re.S).group(1)
+        text = " ".join(re.sub(r"<[^>]+>", " ", fine).replace("&#39;", "'").replace("&rsquo;", "'").split())
+        self.assertEqual(self.NOTICE, text)
+
+
 if __name__ == "__main__":
     unittest.main()
