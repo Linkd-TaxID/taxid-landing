@@ -1,22 +1,28 @@
 /**
- * taxid-demo-sign — Cloudflare Worker
- * -----------------------------------
- * Signs ONE live receipt against the KRA eTIMS sandbox on behalf of the
- * public "Sign a test receipt" demo on https://taxid.co.ke.
+ * taxid-demo-sign — Cloudflare Worker (dormant)
+ * ---------------------------------------------
+ * Relays one demo sale to the TaxID API (POST /v2/etims/sale) so a static page
+ * never holds a credential. The landing page does not call this Worker today
+ * and it is deployed separately, only by hand (see README.md).
  *
- * The landing page is static (GitHub Pages) and cannot hold a credential.
- * This Worker sits between the page and the TaxID middleware: it holds the
- * sandbox API key as a secret binding, so the key never reaches the browser.
+ * Environment: the Worker signs in whichever environment SANDBOX_API_KEY is
+ * bound to. It does not verify that the key is a sandbox key; the `sandbox`
+ * field in its response is a label, not evidence. SIGNED means a control-unit
+ * receipt, not central KRA acceptance.
  *
- * Trust boundary: the browser sends only { amount, band, attemptId }. It never sends a
- * key, and it never sends tax figures — the Worker recomputes the VAT split
- * itself (the same zero-math the SDK uses) so a crafted client cannot forge a
- * receipt with an inconsistent net/VAT/gross. supplierPin, payment type and
- * invoice date are fixed server-side.
+ * Browser contract: { amount, band, attemptId, invoiceDate }. The page mints
+ * attemptId (a UUID) and invoiceDate (yyyy-MM-dd, Africa/Nairobi) together when
+ * an attempt starts and resends both unchanged on every retry. The Worker
+ * recomputes the VAT split, fixes supplierPin and payment type, and sends:
+ *   clientReference  demo-<attemptId>, stable for lookup by original reference
+ *   Idempotency-Key  demo-<sha256(attemptId, invoiceDate, band, amount)>, so the
+ *                    key always names the exact body, invoiceDate included
+ * 409, 422 and 425 from the API mean the original attempt exists, is in
+ * flight, or conflicts: the page must look up clientReference, not retry.
  *
  * Secrets / bindings (see wrangler.toml + README):
- *   SANDBOX_API_KEY  (secret)          — the tenant-bound sandbox X-API-Key
- *   SUPPLIER_PIN     (secret)          — the sandbox device's KRA PIN
+ *   SANDBOX_API_KEY  (secret)          — branch API key, sent as Authorization: Bearer
+ *   SUPPLIER_PIN     (secret)          — the key's taxpayer PIN
  *   IP_LIMITER       (rate limit)      — per-IP burst limit
  *   DAILY_CAP        (Durable Object)  — global signings per day
  *   ALLOW_LOCALHOST  (var, dev only)    — "1" admits http://localhost origins
@@ -38,6 +44,11 @@ const RATE_LABEL = { A: "0%", B: "16%", C: "0%", D: "0%", E: "8%" };
 const PMT_TY_CD = "01"; // 01 = cash (KRA §4.7)
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+// Mirrors PurchaseService.validateInvoiceDate (etims.invoice.max-backdate-days=7).
+const MAX_BACKDATE_DAYS = 7;
+// The original attempt exists, conflicts or is still in flight: look it up.
+const LOOK_UP_STATUSES = new Set([409, 422, 425]);
 
 // Accepted by the middleware but not (yet) signed. PENDING_SYNC is queued and
 // will sign on replay; the other two are ambiguous and held for reconciliation.
@@ -111,9 +122,19 @@ function vatSplit(amount, band) {
   return { net: money(netCents), vat: money(vatCents), gross: money(grossCents) };
 }
 
-// Today's date in Africa/Nairobi (UTC+3, no DST) as yyyy-MM-dd.
-function nairobiDate() {
-  return new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 10);
+// A date in Africa/Nairobi (UTC+3, no DST) as yyyy-MM-dd, offset by whole days.
+function nairobiDate(offsetDays = 0) {
+  return new Date(Date.now() + 3 * 3600 * 1000 + offsetDays * 86400000).toISOString().slice(0, 10);
+}
+function invoiceDateAllowed(value) {
+  if (!DATE_RE.test(value)) return false;
+  const parsed = new Date(value + "T00:00:00Z");
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) return false;
+  return value <= nairobiDate() && value >= nairobiDate(-MAX_BACKDATE_DAYS);
+}
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
 // Global daily signing cap. One named instance serialises every increment,
@@ -172,6 +193,20 @@ export default {
       );
     }
 
+    const attemptId = String(body?.attemptId || "");
+    if (!UUID_RE.test(attemptId)) {
+      return json({ ok: false, error: "bad_attempt", message: "attemptId must be a UUID kept for every retry" }, 400, origin);
+    }
+    const invoiceDate = String(body?.invoiceDate || "");
+    if (!invoiceDateAllowed(invoiceDate)) {
+      return json(
+        { ok: false, error: "bad_invoice_date",
+          message: `invoiceDate must be yyyy-MM-dd, today or up to ${MAX_BACKDATE_DAYS} days earlier, fixed for the attempt` },
+        400,
+        origin,
+      );
+    }
+
     if (!env.SANDBOX_API_KEY || !env.SUPPLIER_PIN || !env.IP_LIMITER || !env.DAILY_CAP) {
       return json({ ok: false, error: "not_configured", message: "demo signing is not fully configured" }, 500, origin);
     }
@@ -191,20 +226,22 @@ export default {
 
     // Recompute the split server-side and build the middleware's flat payload.
     const split = vatSplit(amount, band);
+    const clientReference = `demo-${attemptId.toLowerCase()}`;
     const payload = {
       supplierPin,
+      clientReference,
       amount: split.gross,
       taxAmount: split.vat,
-      invoiceDate: nairobiDate(),
+      invoiceDate,
       itemDescription: "TaxID live demo — sandbox receipt",
       taxBand: band,
       pmtTyCd: PMT_TY_CD,
     };
 
-    // The page keeps one attemptId until a receipt comes back signed, so a
-    // retry after a timeout or a queued result replays instead of re-signing.
-    const attemptId = String(body?.attemptId || "");
-    const idem = `demo-${UUID_RE.test(attemptId) ? attemptId.toLowerCase() : crypto.randomUUID()}`;
+    // The page keeps one attemptId and invoiceDate until the attempt resolves, so
+    // a retry replays the same key and body. The key is derived from every input
+    // that shapes the body; a changed date can never reuse an older key.
+    const idem = "demo-" + await sha256Hex([attemptId.toLowerCase(), invoiceDate, band, split.gross].join("\n"));
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
@@ -213,9 +250,9 @@ export default {
       upstream = await fetch(MIDDLEWARE_URL, {
         method: "POST",
         headers: {
-          "X-API-Key": env.SANDBOX_API_KEY,
+          Authorization: `Bearer ${env.SANDBOX_API_KEY}`,
           "Content-Type": "application/json",
-          "X-TIaaS-Idempotency-Key": idem,
+          "Idempotency-Key": idem,
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -227,7 +264,8 @@ export default {
         {
           ok: false,
           error: timedOut ? "upstream_timeout" : "upstream_unreachable",
-          message: "Could not reach the signing service. Please try again.",
+          clientReference,
+          message: "Could not reach the signing service. Retry this same attempt; it reuses its reference and key.",
         },
         504,
         origin,
@@ -242,9 +280,25 @@ export default {
       return json({ ok: false, error: "upstream_bad_response" }, 502, origin);
     }
 
+    if (LOOK_UP_STATUSES.has(upstream.status)) {
+      return json(
+        {
+          ok: false,
+          error: "look_up_original",
+          retry: false,
+          clientReference,
+          upstreamStatus: upstream.status,
+          code: data.code,
+          message: "This attempt already exists, conflicts or is still being processed. Look up its original reference; don't send it again.",
+        },
+        409,
+        origin,
+      );
+    }
+
     if (upstream.ok && data.status in QUEUED_MESSAGE) {
       return json(
-        { ok: false, queued: true, status: data.status, purchaseId: data.purchaseId, message: QUEUED_MESSAGE[data.status] },
+        { ok: false, queued: true, status: data.status, purchaseId: data.purchaseId, clientReference, message: QUEUED_MESSAGE[data.status] },
         202,
         origin,
       );
@@ -277,6 +331,8 @@ export default {
         vat: split.vat,
         gross: split.gross,
         supplierPin,
+        clientReference,
+        invoiceDate,
         status: data.status,
         cuInvoiceNumber: data.cuInvoiceNumber,
         sdcId: data.sdcId,

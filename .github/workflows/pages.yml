@@ -31,6 +31,8 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_site.py'
       - name: Test local interactive examples
         run: node --test tests/test_connected_demo.mjs
+      - name: Test page links, wording and API samples
+        run: python3 -m unittest tests/test_page_content.py tests/test_code_samples.py
       - name: Build Jekyll site
         env:
           INPUT_TOKEN: ${{ github.token }}
@@ -69,6 +71,8 @@ jobs:
           cache: npm
           cache-dependency-path: worker/package-lock.json
       - run: npm ci
+      - name: Test request identity and conflict handling
+        run: npm test
       - name: Compile without deploying or using secrets
         run: npx wrangler deploy --dry-run --outdir "$RUNNER_TEMP/worker-bundle"
 

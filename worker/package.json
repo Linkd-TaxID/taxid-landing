@@ -2,11 +2,12 @@
   "name": "taxid-demo-sign",
   "version": "1.0.0",
   "private": true,
-  "description": "Cloudflare Worker that signs one live KRA-sandbox receipt for the taxid.co.ke demo",
+  "description": "Dormant Cloudflare Worker that relays one demo sale to the TaxID API",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "tail": "wrangler tail"
+    "tail": "wrangler tail",
+    "test": "node --test test/*.test.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

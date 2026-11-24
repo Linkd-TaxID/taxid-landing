@@ -1,11 +1,11 @@
-# taxid-demo-sign — Cloudflare Worker that signs one live KRA-sandbox receipt
-# for the public demo on taxid.co.ke. Deploy runbook: see README.md.
+# taxid-demo-sign — dormant Cloudflare Worker that relays one demo sale to the
+# TaxID API. The landing page does not call it. Deploy runbook: see README.md.
 
 name = "taxid-demo-sign"
 main = "src/index.js"
 compatibility_date = "2025-07-01"
 
-# Neither the sandbox X-API-Key nor the device PIN is stored here — both are
+# Neither the branch API key (sent as Authorization: Bearer) nor the device PIN is stored here — both are
 # encrypted secrets, never committed (a KRA PIN is identifying data and this
 # repo is public):
 #   npx wrangler secret put SANDBOX_API_KEY   # paste the SANDBOX_SDK_KEY value
