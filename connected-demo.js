@@ -1,16 +1,19 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  // Mirrors the backend simulator's scenarios (SandboxScenarioService.Scenario),
-  // plus EVIDENCE_PENDING: a signed receipt held while its evidence is stored.
+  // Backend sandbox scenarios and two local illustrations of recovery states.
   const outcomes = {
     SUCCESS: {status: 'SIGNED', hint: 'Run to show a signed sample receipt.'},
     TERMINAL_REJECTION: {status: 'FAILED',
       hint: 'Run to show the control unit rejecting the sale. Lookup keeps reporting FAILED.'},
-    SERVICE_UNAVAILABLE_BEFORE_SIGN: {status: 'PENDING_SYNC',
-      hint: 'Run to show a sale queued before it reached the control unit. Lookup finds it signed once the queue sends it.'},
+    SERVICE_UNAVAILABLE_BEFORE_SIGN: {status: 'OUTCOME_UNKNOWN',
+      hint: 'Run to show a control-unit 503 after dispatch. Lookup keeps reporting OUTCOME_UNKNOWN until an operator resolves it.',
+      message: 'The control unit returned 503 after dispatch. Look up the original reference and wait for operator resolution before considering replay.'},
     AMBIGUOUS_TIMEOUT_AFTER_SIGN: {status: 'OUTCOME_UNKNOWN',
-      hint: 'Run to show a timeout after signing. Lookup keeps reporting OUTCOME_UNKNOWN until an operator resolves it.'},
+      hint: 'Run to show a timeout after signing. Lookup keeps reporting OUTCOME_UNKNOWN until an operator resolves it.',
+      message: 'The response was lost after signing. Look up the original reference and wait for operator resolution before considering replay.'},
+    QUEUED_BEFORE_DISPATCH: {status: 'PENDING_SYNC',
+      hint: 'Run to show a sale queued before dispatch. Lookup finds it signed once the queue sends it.'},
     EVIDENCE_PENDING: {status: 'RECONCILIATION_REQUIRED', failureCode: 'EVIDENCE_PENDING',
       hint: 'Run to show a signed receipt held while its evidence is stored. A later lookup finds it SIGNED.'}
   };
@@ -164,7 +167,7 @@
       SIGNED: 'Local sample generated in your browser. No API request, fiscal signing or KRA submission occurred.',
       FAILED: 'Local illustration: the control unit rejected the sale. Correct the cause before creating a new sale; don\u2019t resend this one.',
       PENDING_SYNC: 'Local illustration: the sale was queued before it reached the control unit. Look up the original reference; don\u2019t send a replacement.',
-      OUTCOME_UNKNOWN: 'Local illustration: the response was lost after signing, so the outcome is uncertain. Don\u2019t resend. Lookup reports OUTCOME_UNKNOWN until an operator resolves it.',
+      OUTCOME_UNKNOWN: 'Local illustration: ' + outcomes[scenario].message,
       RECONCILIATION_REQUIRED: 'Local illustration: the receipt is signed but held while its evidence is stored. Look up the original reference later; don\u2019t resend.'
     }[sale.status];
   });

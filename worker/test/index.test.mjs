@@ -82,9 +82,9 @@ test('rejects attempts without a fixed identity before calling upstream', async 
   }
 });
 
-for (const upstreamStatus of [409, 422, 425]) {
-  test('upstream ' + upstreamStatus + ' means look up the original, not retry', async () => {
-    const {status, body} = await call(attempt(), {status: upstreamStatus, body: {status: upstreamStatus, code: 'X', message: 'm'}});
+for (const [upstreamStatus, code] of [[409, 'X'], [425, 'X'], [422, 'IDEMPOTENCY_KEY_REUSED']]) {
+  test('upstream ' + upstreamStatus + ' ' + code + ' means look up the original, not retry', async () => {
+    const {status, body} = await call(attempt(), {status: upstreamStatus, body: {status: upstreamStatus, code, message: 'm'}});
     assert.equal(status, 409);
     assert.equal(body.error, 'look_up_original');
     assert.equal(body.retry, false);
@@ -93,3 +93,74 @@ for (const upstreamStatus of [409, 422, 425]) {
     assert.doesNotMatch(body.message, /try again/i);
   });
 }
+
+// --- P15: itemised sale, honest 422 handling, evidenced sandbox label ---
+
+async function callWith(body, {status = 200, payload, headers = {}}) {
+  const sent = [];
+  globalThis.fetch = async (url, init) => {
+    sent.push({url, init, payload: JSON.parse(init.body)});
+    return new Response(JSON.stringify(payload), {status, headers: {'Content-Type': 'application/json', ...headers}});
+  };
+  const response = await worker.fetch(new Request('https://worker.example/', {
+    method: 'POST', headers: {Origin: ORIGIN, 'Content-Type': 'application/json'}, body: JSON.stringify(body),
+  }), env);
+  return {status: response.status, body: await response.json(), sent};
+}
+const SIGNED = {status: 'SIGNED', cuInvoiceNumber: 'CU/1', sdcId: 'SDC', receiptSignature: 'SIG'};
+
+test('sends an itemised sale: OSCU branches answer a flat taxBand sale with 501', async () => {
+  const {sent} = await callWith(attempt({band: 'B', amount: 116}), {payload: SIGNED, headers: {'X-TaxID-Environment': 'SANDBOX'}});
+  const payload = sent[0].payload;
+  assert.equal(payload.taxBand, undefined, 'flat taxBand must not be sent');
+  assert.deepEqual(payload.items, [{
+    sku: 'TAXID-DEMO-B', itemNm: 'TaxID live demo item', itemClsCd: '5059690800',
+    taxTyCd: 'B', qty: 1, unitPrice: '116.00', pkgUnitCd: 'NT', qtyUnitCd: 'U',
+  }]);
+  assert.equal(payload.amount, '116.00');
+  assert.equal(payload.taxAmount, '16.00');
+});
+
+test('bands without an established item class code are refused before calling upstream', async () => {
+  for (const band of ['A', 'C', 'D', 'E']) {
+    const {status, body, sent} = await callWith(attempt({band}), {payload: SIGNED});
+    assert.equal(status, 400, band);
+    assert.equal(body.error, 'band_unavailable', band);
+    assert.match(body.message, /item class code/);
+    assert.equal(sent.length, 0, band);
+  }
+});
+
+// Backend 422s that are NOT idempotency conflicts: the original was refused, there is nothing to look up.
+const REFUSALS = [
+  {name: 'VSCU_TERMINAL_ERROR (flat)', payload: {status: 'ERROR', code: 'VSCU_TERMINAL_ERROR', message: 'rejected'}},
+  {name: 'INVALID_ITEM_CLASSIFICATION', payload: {status: 'ERROR', code: 'INVALID_ITEM_CLASSIFICATION', message: 'unknown', itemClsCd: '1'}},
+  {name: 'PRECONDITION_FAILED', payload: {status: 'ERROR', code: 'PRECONDITION_FAILED', message: 'precondition'}},
+  {name: 'VSCU ProblemDetail', payload: {title: 'VSCU Terminal Rejection', status: 422, detail: 'rejected', vscu_code: '910', transient: false}},
+  {name: 'OSCU ProblemDetail', payload: {title: 'OSCU Terminal Rejection', status: 422, detail: 'rejected', oscu_code: '13', transient: false}},
+];
+for (const refusal of REFUSALS) {
+  test('upstream 422 ' + refusal.name + ' is a refusal, not "look up the original"', async () => {
+    const {status, body} = await callWith(attempt(), {status: 422, payload: refusal.payload});
+    assert.equal(status, 502);
+    assert.equal(body.error, 'not_signed');
+    assert.equal(body.upstreamStatus, 422);
+    assert.equal(body.message, refusal.payload.message || refusal.payload.detail);
+  });
+}
+
+test('upstream 422 IDEMPOTENCY_KEY_REUSED still means look up the original', async () => {
+  const {body} = await callWith(attempt(), {status: 422, payload: {status: 'ERROR', code: 'IDEMPOTENCY_KEY_REUSED', message: 'm'}});
+  assert.equal(body.error, 'look_up_original');
+});
+
+test('sandbox label follows X-TaxID-Environment instead of being hard-coded', async () => {
+  const sandbox = await callWith(attempt(), {payload: SIGNED, headers: {'X-TaxID-Environment': 'SANDBOX'}});
+  assert.equal(sandbox.body.sandbox, true);
+  for (const label of ['PRODUCTION', 'SIMULATED', undefined]) {
+    const headers = label ? {'X-TaxID-Environment': label} : {};
+    const {body} = await callWith(attempt(), {payload: SIGNED, headers});
+    assert.equal(body.sandbox, false, 'environment ' + label + ' must not be labelled sandbox');
+    assert.equal(body.environment, label ?? null);
+  }
+});

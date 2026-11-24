@@ -6,19 +6,22 @@
  * and it is deployed separately, only by hand (see README.md).
  *
  * Environment: the Worker signs in whichever environment SANDBOX_API_KEY is
- * bound to. It does not verify that the key is a sandbox key; the `sandbox`
- * field in its response is a label, not evidence. SIGNED means a control-unit
- * receipt, not central KRA acceptance.
+ * bound to. A SIGNED result reports `sandbox: true` only when the API's
+ * X-TaxID-Environment response header says SANDBOX; otherwise it reports
+ * `sandbox: false` with the header value (or null) in `environment`. SIGNED
+ * means a control-unit receipt, not central KRA acceptance.
  *
  * Browser contract: { amount, band, attemptId, invoiceDate }. The page mints
  * attemptId (a UUID) and invoiceDate (yyyy-MM-dd, Africa/Nairobi) together when
  * an attempt starts and resends both unchanged on every retry. The Worker
- * recomputes the VAT split, fixes supplierPin and payment type, and sends:
+ * recomputes the VAT split, fixes supplierPin and payment type, and sends one
+ * itemised line (OSCU branches refuse a sale without items with 501):
  *   clientReference  demo-<attemptId>, stable for lookup by original reference
  *   Idempotency-Key  demo-<sha256(attemptId, invoiceDate, band, amount)>, so the
  *                    key always names the exact body, invoiceDate included
- * 409, 422 and 425 from the API mean the original attempt exists, is in
- * flight, or conflicts: the page must look up clientReference, not retry.
+ * 409, 425 and 422 IDEMPOTENCY_KEY_REUSED from the API mean the original attempt
+ * exists, is in flight, or conflicts: the page must look up clientReference, not
+ * retry. Every other 422 is a refusal (nothing was signed) and maps to not_signed.
  *
  * Secrets / bindings (see wrangler.toml + README):
  *   SANDBOX_API_KEY  (secret)          — branch API key, sent as Authorization: Bearer
@@ -43,12 +46,25 @@ const RATE_LABEL = { A: "0%", B: "16%", C: "0%", D: "0%", E: "8%" };
 // with `wrangler secret put SUPPLIER_PIN`.
 const PMT_TY_CD = "01"; // 01 = cash (KRA §4.7)
 
+// One itemised demo line per band. Neither candidate code is proven against
+// real KRA master data: the mock-VSCU fixture (MockVscuController) lists both
+// 10101601 as taxTyCd "A" and 5059690800 as "B". Band B is kept because
+// 5059690800 is also the backend's configured default outside the mock
+// (PurchaseService, etims.default.item-cls-cd). Band A's only evidence is the
+// mock fixture, so A is refused locally, as are C, D and E (no code at all).
+const DEMO_ITEMS = {
+  B: { sku: "TAXID-DEMO-B", itemNm: "TaxID live demo item", itemClsCd: "5059690800" },
+};
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // Mirrors PurchaseService.validateInvoiceDate (etims.invoice.max-backdate-days=7).
 const MAX_BACKDATE_DAYS = 7;
 // The original attempt exists, conflicts or is still in flight: look it up.
-const LOOK_UP_STATUSES = new Set([409, 422, 425]);
+// Other 422s (terminal VSCU/OSCU rejection, unknown item class, failed
+// precondition) are refusals of this attempt, not evidence of an original.
+const LOOK_UP_STATUSES = new Set([409, 425]);
+const LOOK_UP_422_CODES = new Set(["IDEMPOTENCY_KEY_REUSED"]);
 
 // Accepted by the middleware but not (yet) signed. PENDING_SYNC is queued and
 // will sign on replay; the other two are ambiguous and held for reconciliation.
@@ -185,6 +201,14 @@ export default {
     if (!(band in RATES)) {
       return json({ ok: false, error: "bad_band", message: "band must be A, B, C, D or E" }, 400, origin);
     }
+    if (!(band in DEMO_ITEMS)) {
+      return json(
+        { ok: false, error: "band_unavailable",
+          message: `The demo only signs band ${Object.keys(DEMO_ITEMS).join(", ")}: no item class code is established for band ${band}.` },
+        400,
+        origin,
+      );
+    }
     if (!Number.isFinite(amount) || amount < MIN_AMOUNT || amount > MAX_AMOUNT) {
       return json(
         { ok: false, error: "bad_amount", message: `amount must be between ${MIN_AMOUNT} and ${MAX_AMOUNT}` },
@@ -224,7 +248,7 @@ export default {
       return json({ ok: false, error: "rate_limited", scope: "global", message }, 429, origin);
     }
 
-    // Recompute the split server-side and build the middleware's flat payload.
+    // Recompute the split server-side and build an itemised single-line sale.
     const split = vatSplit(amount, band);
     const clientReference = `demo-${attemptId.toLowerCase()}`;
     const payload = {
@@ -234,8 +258,15 @@ export default {
       taxAmount: split.vat,
       invoiceDate,
       itemDescription: "TaxID live demo — sandbox receipt",
-      taxBand: band,
       pmtTyCd: PMT_TY_CD,
+      items: [{
+        ...DEMO_ITEMS[band],
+        taxTyCd: band,
+        qty: 1,
+        unitPrice: split.gross,
+        pkgUnitCd: "NT",
+        qtyUnitCd: "U",
+      }],
     };
 
     // The page keeps one attemptId and invoiceDate until the attempt resolves, so
@@ -280,7 +311,8 @@ export default {
       return json({ ok: false, error: "upstream_bad_response" }, 502, origin);
     }
 
-    if (LOOK_UP_STATUSES.has(upstream.status)) {
+    if (LOOK_UP_STATUSES.has(upstream.status)
+        || (upstream.status === 422 && LOOK_UP_422_CODES.has(data.code))) {
       return json(
         {
           ok: false,
@@ -311,7 +343,8 @@ export default {
           ok: false,
           error: "not_signed",
           upstreamStatus: upstream.status,
-          message: data.message || "The signing service did not return a signed receipt.",
+          code: data.code,
+          message: data.message || data.detail || "The signing service did not return a signed receipt.",
         },
         502,
         origin,
@@ -319,12 +352,14 @@ export default {
     }
 
     // Success: return the split we computed + the real fiscal block. Nothing
-    // here is a secret; the whole point is that these are genuine KRA-sandbox
-    // control-unit values.
+    // here is a secret. The sandbox label is evidence-based: the API names its
+    // runtime in X-TaxID-Environment (SIMULATED, SANDBOX or PRODUCTION).
+    const environment = upstream.headers.get("X-TaxID-Environment");
     return json(
       {
         ok: true,
-        sandbox: true,
+        sandbox: environment === "SANDBOX",
+        environment,
         band,
         rate: RATE_LABEL[band],
         net: split.net,
