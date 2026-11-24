@@ -61,6 +61,7 @@ defaults:
 exclude:
   - worker/
   - README.md
+  - SECURITY.md
   - Gemfile
   - Gemfile.lock
   - vendor/
