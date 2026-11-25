@@ -20,6 +20,16 @@ def links(page, href):
             for text in re.findall(r'<a[^>]*href="' + re.escape(href) + r'"[^>]*>(.*?)</a>', page, re.S)]
 
 
+class LandmarkTests(unittest.TestCase):
+    def test_home_page_has_one_main_landmark_between_nav_and_footer(self):
+        self.assertEqual(1, PAGE.count("<main"))
+        self.assertEqual(1, PAGE.count("</main>"))
+        self.assertLess(PAGE.index("</nav>"), PAGE.index("<main"))
+        self.assertLess(PAGE.index("<main"), PAGE.index('<section class="hero">'))
+        self.assertLess(PAGE.rindex("</section>"), PAGE.index("</main>"))
+        self.assertLess(PAGE.index("</main>"), PAGE.index("<footer>"))
+
+
 class LinkTests(unittest.TestCase):
     def test_error_reference_links_say_what_they_open(self):
         for name, page in {"index.html": PAGE, **INCLUDES}.items():
